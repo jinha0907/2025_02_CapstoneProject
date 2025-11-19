@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LifeInformation {
+public class LifeInfo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
