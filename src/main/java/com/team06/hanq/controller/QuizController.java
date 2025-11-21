@@ -26,6 +26,7 @@ public class QuizController {
         return quizService.getQuizForUser(userId);
     }
 
+    @Operation(summary = "사용자의 퀴즈 결과 가져오기")
     @PostMapping("/result")
     public QuizResultResponseDTO saveQuizResult(@RequestBody QuizResultRequestDTO request) {
         return quizService.saveQuizResult(request);
