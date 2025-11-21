@@ -1,17 +1,16 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/hanq?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
-    username: root
-    password: gogosing01
     driver-class-name: com.mysql.cj.jdbc.Driver
-
+    url: jdbc:mysql://localhost:3306/hanq?serverTimezone=Asia/Seoul
+    username: root
+    password: 1216
   jpa:
     hibernate:
-      ddl-auto: update   # (초기 개발 중에는 create / update 사용)
+      ddl-auto: update
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
     show-sql: true
-
 server:
   port: 8080
