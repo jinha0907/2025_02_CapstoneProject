@@ -1,0 +1,34 @@
+package com.team06.hanq.controller;
+
+import com.team06.hanq.dto.UserSettingsRequestDTO;
+import com.team06.hanq.dto.UserSettingsResponseDTO;
+import com.team06.hanq.service.UserSettingsService;
+import io.swagger.v3.oas.annotations.Operation;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/users/{userId}/settings")
+@RequiredArgsConstructor
+public class UserSettingsController {
+
+    private final UserSettingsService service;
+
+    @Operation(summary = "유저 설정 조회 (난이도, 학습량)")
+    @GetMapping
+    public UserSettingsResponseDTO getSettings(@PathVariable Long userId) {
+        return service.getUserSettings(userId);
+    }
+
+    @Operation(summary = "유저 난이도 변경")
+    @PutMapping("/difficulty")
+    public UserSettingsResponseDTO updateDifficulty(@PathVariable Long userId, @RequestParam String difficulty) {
+        return service.updateDifficulty(userId, difficulty);
+    }
+
+    @Operation(summary = "유저 학습량 변경")
+    @PutMapping("/question-count")
+    public UserSettingsResponseDTO updateQuestionCount(@PathVariable Long userId, @RequestParam int count) {
+        return service.updateQuestionCount(userId, count);
+    }
+}
