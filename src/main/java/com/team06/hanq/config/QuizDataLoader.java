@@ -31,20 +31,27 @@ public class QuizDataLoader {
             }
 
             List<QuizJsonRecord> quizList = objectMapper.readValue(file, new TypeReference<>() {});
+            int inserted = 0;
+            int skipped = 0;
 
             for (QuizJsonRecord item : quizList) {
-                // 🔹 category 추출 (예: "KIIP_economy_1" → "economy")
+                // 🔍 이미 동일한 question이 있으면 skip
+                boolean exists = quizDetailsRepo.existsByQuestion(item.getQuestion());
+                if (exists) {
+                    skipped++;
+                    continue;
+                }
+
+                // ✅ category = id에서 추출 ("KIIP_economy_1" → "economy")
                 String[] parts = item.getId().split("_");
                 String category = parts.length > 1 ? parts[1] : "general";
 
-                // 🔹 quiz_header 생성
                 QuizHeader header = QuizHeader.builder()
                         .category(category)
                         .difficulty(QuizHeader.Difficulty.NORMAL)
                         .build();
                 quizHeaderRepo.save(header);
 
-                // 🔹 quiz_details 생성
                 QuizDetails details = QuizDetails.builder()
                         .quizHeader(header)
                         .question(item.getQuestion())
@@ -53,9 +60,12 @@ public class QuizDataLoader {
                         .explanation(objectMapper.writeValueAsString(item.getExplanation()))
                         .build();
                 quizDetailsRepo.save(details);
+
+                inserted++;
             }
 
-            System.out.println("✅ Loaded " + quizList.size() + " quiz records from made_by_PDFRAG.json");
+            System.out.println("✅ Quiz JSON load complete: " +
+                    inserted + " inserted, " + skipped + " skipped.");
 
         } catch (Exception e) {
             System.err.println("❌ Failed to load quiz data: " + e.getMessage());
@@ -63,7 +73,7 @@ public class QuizDataLoader {
         }
     }
 
-    // 내부용 DTO 클래스
+    // 내부 JSON 구조 매핑 클래스
     @lombok.Data
     static class QuizJsonRecord {
         private String id;

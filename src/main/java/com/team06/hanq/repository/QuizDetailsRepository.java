@@ -15,4 +15,10 @@ public interface QuizDetailsRepository extends JpaRepository<QuizDetails, Long> 
     // 랜덤 문제 N개 가져오기
     @Query(value = "SELECT * FROM quiz_details ORDER BY RAND() LIMIT :limit", nativeQuery = true)
     List<QuizDetails> findRandomQuizzes(@Param("limit") int limit);
+
+    // 퀴즈 중복 내용 확인용
+    boolean existsByQuestion(String question);
+
+
+
 }
