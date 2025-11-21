@@ -4,12 +4,14 @@ import com.team06.hanq.dto.UserSettingsRequestDTO;
 import com.team06.hanq.dto.UserSettingsResponseDTO;
 import com.team06.hanq.service.UserSettingsService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users/{userId}/settings")
 @RequiredArgsConstructor
+@Tag(name = "User Settings", description = "유저 설정 관련 API(일 학습량 / 난이도)")
 public class UserSettingsController {
 
     private final UserSettingsService service;
