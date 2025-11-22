@@ -24,7 +24,7 @@ public class QuizDataLoader {
     @PostConstruct
     public void loadQuizData() {
         try {
-            File file = new File("src/main/resources/made_by_PDFRAG.json");
+            File file = new File("home/ubuntu/made_by_PDFRAG.json");
             if (!file.exists()) {
                 System.out.println("⚠️ Quiz JSON file not found — skipping load.");
                 return;
