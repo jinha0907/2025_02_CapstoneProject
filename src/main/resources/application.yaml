@@ -3,7 +3,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/hanq?useSSL=false&serverTimezone=Asia/Seoul
     username: root
-    password: 1216
+    password: hanq1234!
   jpa:
     hibernate:
       ddl-auto: update
