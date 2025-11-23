@@ -27,7 +27,7 @@ public class DataLoader implements CommandLineRunner {
         ObjectMapper mapper = new ObjectMapper();
 
         // ✅ 1️⃣ LIFE 정보 로드
-        File lifeFile = new File("home/ubuntu/Explanation_EPS.json");
+        File lifeFile = new File("/home/ubuntu/Explanation_EPS.json");
         if (lifeFile.exists()) {
             if (lifeRepo.count() == 0) {
                 List<LifeInfo> lifeData = Arrays.asList(
@@ -43,7 +43,7 @@ public class DataLoader implements CommandLineRunner {
         }
 
         // ✅ 2️⃣ CULTURE 정보 로드
-        File cultureFile = new File("home/ubuntu/Explanation_KIIP.json");
+        File cultureFile = new File("/home/ubuntu/Explanation_KIIP.json");
         if (cultureFile.exists()) {
             if (cultureRepo.count() == 0) {
                 List<CultureInfo> cultureData = Arrays.asList(
