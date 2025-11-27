@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../api/settings_api.dart';
+import '../../../info/user_info.dart';
 
 class AmountSettingScreen extends StatefulWidget {
   const AmountSettingScreen({super.key});
@@ -9,8 +13,42 @@ class AmountSettingScreen extends StatefulWidget {
 
 class _AmountSettingScreenState extends State<AmountSettingScreen> {
   int? _selectedAmount;
+  bool _isSaving = false;
 
   static const _primaryColor = Color(0xFF4E7C88);
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedAmount = UserInfo.currentUser?.questionCount;
+  }
+
+  Future<void> _saveSettings() async {
+    if (_selectedAmount == null) return;
+    final userId = UserInfo.currentUser?.userId;
+    if (userId == null) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final response = await SettingsApi.updateQuestionCount(
+        userId: userId,
+        count: _selectedAmount!,
+      );
+
+      if (response != null && mounted) {
+        context.pop();
+      } else {
+        // TODO: 실패 UI 처리
+      }
+    } catch (e) {
+      print('학습량 설정 저장 실패: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,21 +69,19 @@ class _AmountSettingScreenState extends State<AmountSettingScreen> {
             children: [
               // 상단 호랑이 + 텍스트
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center, // ★ 세로 중앙 정렬
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Image.asset(
                     'assets/images/tiger_image.png',
-                    width: 120,  // 원하면 크기 조절 가능
+                    width: 120,
                     height: 120,
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(width: 16),
-
-                  // 텍스트를 호랑이 가운데에 맞추기 위해 Center로 감싸기
-                  Expanded(
+                  const Expanded(
                     child: Center(
                       child: Text(
-                        '하루 퀴즈 문제 분량을\n설정할게요!',  // 원하는 텍스트
+                        '하루 퀴즈 문제 분량을\n설정할게요!',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 20,
@@ -62,26 +98,30 @@ class _AmountSettingScreenState extends State<AmountSettingScreen> {
               // ===== 분량 선택 옵션들 =====
               _AmountOption(
                 label: '3 문제',
-                isSelected: _selectedAmount == 3,
-                onTap: () => setState(() => _selectedAmount = 3),
+                value: 3,
+                groupValue: _selectedAmount,
+                onChanged: (v) => setState(() => _selectedAmount = v),
               ),
               const SizedBox(height: 10),
               _AmountOption(
                 label: '5 문제',
-                isSelected: _selectedAmount == 5,
-                onTap: () => setState(() => _selectedAmount = 5),
+                value: 5,
+                groupValue: _selectedAmount,
+                onChanged: (v) => setState(() => _selectedAmount = v),
               ),
               const SizedBox(height: 10),
               _AmountOption(
                 label: '7 문제',
-                isSelected: _selectedAmount == 7,
-                onTap: () => setState(() => _selectedAmount = 7),
+                value: 7,
+                groupValue: _selectedAmount,
+                onChanged: (v) => setState(() => _selectedAmount = v),
               ),
               const SizedBox(height: 10),
               _AmountOption(
                 label: '9 문제',
-                isSelected: _selectedAmount == 9,
-                onTap: () => setState(() => _selectedAmount = 9),
+                value: 9,
+                groupValue: _selectedAmount,
+                onChanged: (v) => setState(() => _selectedAmount = v),
               ),
 
               const Spacer(),
@@ -90,13 +130,9 @@ class _AmountSettingScreenState extends State<AmountSettingScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _selectedAmount == null
+                  onPressed: _selectedAmount == null || _isSaving
                       ? null
-                      : () {
-                    // TODO: 여기서 선택한 분량 저장
-                    // 예) context.read<Settings>().setDailyAmount(_selectedAmount);
-                    Navigator.pop(context); // 설정 탭 첫 화면으로 돌아가기
-                  },
+                      : _saveSettings,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primaryColor,
                     foregroundColor: Colors.white,
@@ -106,13 +142,15 @@ class _AmountSettingScreenState extends State<AmountSettingScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    '확인',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: _isSaving
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          '확인',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -122,30 +160,32 @@ class _AmountSettingScreenState extends State<AmountSettingScreen> {
     );
   }
 }
-
 class _AmountOption extends StatelessWidget {
   final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
+  final int value;
+  final int? groupValue;
+  final ValueChanged<int?> onChanged;
 
   const _AmountOption({
     required this.label,
-    required this.isSelected,
-    required this.onTap,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isSelected = value == groupValue;
     final borderColor =
-    isSelected ? const Color(0xFF4E7C88) : const Color(0xFFB0A69A);
+        isSelected ? const Color(0xFF4E7C88) : const Color(0xFFB0A69A);
     final bgColor = isSelected ? const Color(0xFF4E7C88) : Colors.white;
     final titleColor = isSelected ? Colors.white : Colors.black87;
 
     return InkWell(
-      onTap: onTap,
+      onTap: () => onChanged(value),
       borderRadius: BorderRadius.circular(12),
       child: Ink(
-        width: double.infinity, // 가로는 부모 너비를 꽉 채움
+        width: double.infinity,
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(12),
@@ -156,7 +196,7 @@ class _AmountOption extends StatelessWidget {
           child: Center(
             child: Text(
               label,
-              textAlign: TextAlign.center, // 가운데 정렬
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,

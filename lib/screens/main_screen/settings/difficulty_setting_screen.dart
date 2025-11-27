@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../api/settings_api.dart';
+import '../../../info/user_info.dart';
 
 class DifficultySettingScreen extends StatefulWidget {
   const DifficultySettingScreen({super.key});
@@ -10,8 +14,45 @@ class DifficultySettingScreen extends StatefulWidget {
 
 class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
   String? _selectedDifficulty;
+  bool _isSaving = false;
 
   static const _primaryColor = Color(0xFF4E7C88);
+
+  @override
+  void initState() {
+    super.initState();
+    // 현재 사용자 설정 값을 초기 선택값으로 지정
+    _selectedDifficulty = UserInfo.currentUser?.difficulty;
+  }
+
+  Future<void> _saveSettings() async {
+    if (_selectedDifficulty == null) return;
+    final userId = UserInfo.currentUser?.userId;
+    if (userId == null) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final response = await SettingsApi.updateDifficulty(
+        userId: userId,
+        difficulty: _selectedDifficulty!,
+      );
+
+      if (response != null && mounted) {
+        // 성공 시 화면 닫기
+        context.pop();
+      } else {
+        // TODO: 실패 UI 처리 (예: 스낵바)
+      }
+    } catch (e) {
+      // TODO: 에러 UI 처리
+      print('난이도 설정 저장 실패: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +73,7 @@ class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
             children: [
               // 상단 호랑이 + 텍스트
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center,   // ★ 세로 중앙 정렬
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Image.asset(
                     'assets/images/tiger_image.png',
@@ -41,9 +82,8 @@ class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(width: 16),
-
-                  Expanded(
-                    child: Center(                      // ★ 텍스트를 세로 중앙으로 이동
+                  const Expanded(
+                    child: Center(
                       child: Text(
                         '맞춤형 퀴즈 난이도를\n설정할게요!',
                         textAlign: TextAlign.center,
@@ -57,33 +97,32 @@ class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 24),
 
-              // 선택지들: 화면 양쪽 10 여백만 두기
+              // 선택지들
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Column(
                   children: [
                     _DifficultyOption(
-                      title: '쉬운 난이도: 기본적인 상식 문제 위주의 퀴즈',
-                      isSelected: _selectedDifficulty == 'easy',
-                      onTap: () =>
-                          setState(() => _selectedDifficulty = 'easy'),
+                      title: '쉬움: 기본적인 상식 문제 위주',
+                      value: 'easy',
+                      groupValue: _selectedDifficulty,
+                      onChanged: (v) => setState(() => _selectedDifficulty = v),
                     ),
                     const SizedBox(height: 20),
                     _DifficultyOption(
-                      title: '보통 난이도: 기본 상식과 중간 수준의 퀴즈',
-                      isSelected: _selectedDifficulty == 'normal',
-                      onTap: () =>
-                          setState(() => _selectedDifficulty = 'normal'),
+                      title: '보통: 기본 상식과 중간 수준 퀴즈',
+                      value: 'normal',
+                      groupValue: _selectedDifficulty,
+                      onChanged: (v) => setState(() => _selectedDifficulty = v),
                     ),
                     const SizedBox(height: 20),
                     _DifficultyOption(
-                      title: '어려운 난이도: 어려운 수준의 상식 퀴즈',
-                      isSelected: _selectedDifficulty == 'hard',
-                      onTap: () =>
-                          setState(() => _selectedDifficulty = 'hard'),
+                      title: '어려움: 깊이 있는 상식 퀴즈',
+                      value: 'hard',
+                      groupValue: _selectedDifficulty,
+                      onChanged: (v) => setState(() => _selectedDifficulty = v),
                     ),
                   ],
                 ),
@@ -95,11 +134,9 @@ class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _selectedDifficulty == null
+                  onPressed: _selectedDifficulty == null || _isSaving
                       ? null
-                      : () {
-                    Navigator.pop(context);
-                  },
+                      : _saveSettings,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primaryColor,
                     foregroundColor: Colors.white,
@@ -109,13 +146,15 @@ class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    '확인',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: _isSaving
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          '확인',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -128,27 +167,30 @@ class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
 
 class _DifficultyOption extends StatelessWidget {
   final String title;
-  final bool isSelected;
-  final VoidCallback onTap;
+  final String value;
+  final String? groupValue;
+  final ValueChanged<String?> onChanged;
 
   const _DifficultyOption({
     required this.title,
-    required this.isSelected,
-    required this.onTap,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isSelected = value == groupValue;
     final borderColor =
-    isSelected ? const Color(0xFF4E7C88) : const Color(0xFFB0A69A);
+        isSelected ? const Color(0xFF4E7C88) : const Color(0xFFB0A69A);
     final bgColor = isSelected ? const Color(0xFF4E7C88) : Colors.white;
     final titleColor = isSelected ? Colors.white : Colors.black87;
 
     return InkWell(
-      onTap: onTap,
+      onTap: () => onChanged(value),
       borderRadius: BorderRadius.circular(12),
       child: Ink(
-        width: double.infinity,       // ← ← ← ★ 가로 전체 채움 (핵심)
+        width: double.infinity,
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(12),
