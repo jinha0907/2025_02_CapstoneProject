@@ -1,14 +1,17 @@
-// lib/screens/main_tab_body.dart
 import 'package:flutter/material.dart';
 import 'package:korean_culture_quiz/widgets/weekly_study_chart.dart';
 
 
 class MainTabBody extends StatelessWidget {
+  final String name;
+  final String tier;
   final List<double> weeklyData;
   final VoidCallback onTodayQuizTap; // ← 오늘의 퀴즈 탭 콜백
 
   const MainTabBody({
     super.key,
+    required this.name,
+    required this.tier,
     required this.weeklyData,
     required this.onTodayQuizTap,
   });
@@ -39,22 +42,23 @@ class MainTabBody extends StatelessWidget {
 
           // ===== 헤더 =====
           _HeaderSection(
+            name: name,
             tierCard: _InfoCard(
               leading: const SizedBox.shrink(),
-              title: '내 티어: 새싹',
+              title: '내 티어: $tier',
               titleWidget: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Text(
-                    '내 티어: 새싹',
-                    style: TextStyle(
+                    '내 티어: $tier',
+                    style: const TextStyle(
                       color: Color(0xFF2C2C2C),
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  SizedBox(width: 6),
-                  Text('🌱', style: TextStyle(fontSize: 26)),
+                  const SizedBox(width: 6),
+                  const Text('🌱', style: TextStyle(fontSize: 26)),
                 ],
               ),
               subtitle: '퀴즈를 풀어 단계를 올려보세요!',
@@ -96,8 +100,9 @@ class MainTabBody extends StatelessWidget {
 
 /// ===== 상단 헤더 =====
 class _HeaderSection extends StatelessWidget {
+  final String name;
   final Widget tierCard;
-  const _HeaderSection({required this.tierCard});
+  const _HeaderSection({required this.name, required this.tierCard});
 
   @override
   Widget build(BuildContext context) {
@@ -138,16 +143,16 @@ class _HeaderSection extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
-              children: const [
-                CircleAvatar(
+              children: [
+                const CircleAvatar(
                   radius: 18,
                   backgroundColor: Color(0xFFB7D3D9),
                   child: Icon(Icons.person, color: Colors.white, size: 20),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
-                  '홍길동',
-                  style: TextStyle(
+                  name,
+                  style: const TextStyle(
                     fontSize: 16,
                     color: Color(0xFF2C2C2C),
                     fontWeight: FontWeight.w700,

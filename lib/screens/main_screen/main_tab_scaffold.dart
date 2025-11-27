@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../info/user_info.dart';
 import '../../router.dart';
 
 import 'main_tab_body.dart';
 import 'info_tab_body.dart';
 import 'settings_tab_body.dart';
-import 'learning_status_tab_body.dart'; // ⬅️ 학습 현황 탭 바디 추가 import
+import 'learning_status_tab_body.dart';
 
 class MainTabScaffold extends StatefulWidget {
   const MainTabScaffold({super.key});
@@ -17,12 +18,31 @@ class MainTabScaffold extends StatefulWidget {
 class _MainTabScaffoldState extends State<MainTabScaffold> {
   int _currentIndex = 0;
 
+  String _name = '';
+  String _tier = '';
+
   /// 주간 학습량(월~일)
   List<double> weeklyData = [2.5, 3.0, 4.2, 3.5, 5.0, 4.8, 3.3];
 
   void setWeeklyData(List<double> data) {
     if (data.length != 7) return;
     setState(() => weeklyData = data);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _updateUserInfo();
+  }
+
+  void _updateUserInfo() {
+    final user = UserInfo.currentUser;
+    if (user != null) {
+      setState(() {
+        _name = user.nickname;
+        _tier = user.tier;
+      });
+    }
   }
 
   @override
@@ -36,6 +56,8 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
           index: _currentIndex,
           children: [
             MainTabBody(
+              name: _name,
+              tier: _tier,
               weeklyData: weeklyData,
               // 🔸 라우팅은 여기서만 처리
               onTodayQuizTap: () => context.go(R.quiz),
@@ -45,7 +67,7 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
             // ✅ 3번째: 학습 현황 탭 실제 화면 연결
             LearningStatusTabBody(
               weeklyData: weeklyData,
-              tierName: '새싹',       // 나중에 백엔드 값으로 교체 가능
+              tierName: _tier,       // 나중에 백엔드 값으로 교체 가능
               totalQuizCount: 30,      // 예시 값
               completionRatio: 0.3,    // 예: 전체 퀴즈 중 30% 완료
             ),

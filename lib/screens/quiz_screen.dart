@@ -39,10 +39,13 @@ class QuizController {
   int get total => questions.length;
   bool get isLast => index == total - 1;
   bool get hasSelection => selected != null;
-  bool get isCorrectNow => selected != null && selected == q.answerIndex;           // 화면 표시용
-  bool get isFirstCorrect => firstSelected != null && firstSelected == q.answerIndex; // 채점용
+  bool get isCorrectNow =>
+      selected != null && selected == q.answerIndex; // 화면 표시용
+  bool get isFirstCorrect =>
+      firstSelected != null && firstSelected == q.answerIndex; // 채점용
   double get progress => (index + 1) / total;
-  Choice? get selectedChoice => (selected == null) ? null : q.choices[selected!];
+  Choice? get selectedChoice =>
+      (selected == null) ? null : q.choices[selected!];
 
   /// ✅ 언제든 다른 선지로 변경 가능
   /// 처음 선택일 때만 firstSelected를 기록(채점에 사용)
@@ -50,9 +53,9 @@ class QuizController {
     if (stage == QuizStage.question) {
       stage = QuizStage.feedback;
     }
-    selected ??= i;      // 화면 첫 선택 기록
+    selected ??= i; // 화면 첫 선택 기록
     firstSelected ??= i; // ✅ 채점용 첫 선택 기록(이미 있으면 유지)
-    selected = i;        // 화면용 현재 선택은 언제든 변경 가능
+    selected = i; // 화면용 현재 선택은 언제든 변경 가능
   }
 
   /// ✅ 다음 문제로 진행(채점은 '처음 선택' 기준)
@@ -65,7 +68,7 @@ class QuizController {
 
     index++;
     selected = null;
-    firstSelected = null;   // ✅ 다음 문제에서 다시 초기화
+    firstSelected = null; // ✅ 다음 문제에서 다시 초기화
     stage = QuizStage.question;
     return false;
   }
@@ -277,56 +280,62 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                 ),
 
-                // 피드백 패널
+                // 피드백 패널 (스크롤 + 호랑이 가운데 정렬)
                 if (c.stage == QuizStage.feedback &&
                     c.selectedChoice != null)
                   Positioned(
                     left: 22,
                     top: 243,
-                    child: Container(
+                    child: SizedBox(
                       width: 333,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: c.isCorrectNow
-                            ? const Color(0xFF6D9E8D)
-                            : const Color(0xFFCC8275),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Image.asset(
-                            'assets/images/tiger_image.png',
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.contain,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              c.isCorrectNow
-                                  ? '정답입니다! ${c.selectedChoice!.explanation}'
-                                  : '오답입니다. ${c.selectedChoice!.explanation}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontFamily: 'Roboto',
-                                fontWeight: FontWeight.w600,
-                                height: 1.54,
-                              ),
-                              softWrap: true,
+                      height: 200, // 필요하면 여기 높이 조절
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: c.isCorrectNow
+                              ? const Color(0xFF6D9E8D)
+                              : const Color(0xFFCC8275),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center, // 🔹 세로 가운데 정렬
+                          children: [
+                            Image.asset(
+                              'assets/images/tiger_image.png',
+                              width: 60,
+                              height: 120,
+                              fit: BoxFit.contain,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            // 🔹 이 영역이 스크롤 가능
+                            Expanded(
+                              child: SingleChildScrollView(
+                                child: Text(
+                                  c.isCorrectNow
+                                      ? '${c.selectedChoice!.explanation}'
+                                      : '${c.selectedChoice!.explanation}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontFamily: 'Roboto',
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.54,
+                                  ),
+                                  softWrap: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
 
-                // 보기들
+                // 보기들 (높이/간격 줄이기)
                 for (int i = 0; i < c.q.choices.length; i++)
                   Positioned(
                     left: 20,
-                    top: 414 + (i * 70),
+                    top: 450 + (i * 60), // 🔹 간격 70 → 60으로 줄임
                     child: _OptionTile(
                       letter: String.fromCharCode(65 + i),
                       text: c.q.choices[i].text,
@@ -397,7 +406,7 @@ class _OptionTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 335,
-        height: 60,
+        height: 52, // 🔹 기존 60 → 52로 줄임
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(8),
@@ -406,23 +415,26 @@ class _OptionTile extends StatelessWidget {
           children: [
             Positioned(
               left: 16,
-              top: 12,
+              top: 10, // 🔹 살짝 위로 올림 (12 → 10)
               child: Container(
-                width: 36,
-                height: 36,
+                width: 32, // 🔹 기존 36 → 32
+                height: 32,
                 decoration: const BoxDecoration(
                   color: Color(0xFFEDE8E3),
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
                 child: isSelected
-                    ? const Icon(Icons.check,
-                    size: 20, color: Color(0xFF4E7C88))
+                    ? const Icon(
+                  Icons.check,
+                  size: 18, // 🔹 아이콘도 살짝 줄임
+                  color: Color(0xFF4E7C88),
+                )
                     : Text(
                   letter,
                   style: const TextStyle(
                     color: Color(0xFF060710),
-                    fontSize: 16,
+                    fontSize: 15,
                     fontFamily: 'Roboto',
                     fontWeight: FontWeight.w600,
                   ),
@@ -431,7 +443,7 @@ class _OptionTile extends StatelessWidget {
             ),
             Positioned(
               left: 70,
-              top: 20,
+              top: 16, // 🔹 텍스트도 20 → 16으로 내려서 가운데 느낌
               child: SizedBox(
                 width: 250,
                 child: Text(
@@ -440,7 +452,7 @@ class _OptionTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFF2C2C2C),
-                    fontSize: 16,
+                    fontSize: 15,
                     fontFamily: 'Roboto',
                     fontWeight: FontWeight.w600,
                   ),

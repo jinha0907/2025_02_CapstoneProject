@@ -1,16 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../DTO/quiz_result_request.dart';
+import '../DTO/user_response.dart';
+import '../api/quiz_api.dart';
+import '../info/user_info.dart';
 import '../router.dart';
 
-class QuizResultScreen extends StatelessWidget {
+class QuizResultScreen extends StatefulWidget {
   final int total;
   final int correct;
 
   const QuizResultScreen({
     super.key,
-    this.total = 2,   // 기본값 (직접 접근 시 대비)
+    this.total = 2, // 기본값 (직접 접근 시 대비)
     this.correct = 1,
   });
+
+  @override
+  State<QuizResultScreen> createState() => _QuizResultScreenState();
+}
+
+class _QuizResultScreenState extends State<QuizResultScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _submitResult();
+  }
+
+  Future<void> _submitResult() async {
+    final user = UserInfo.currentUser;
+    if (user == null) return;
+
+    try {
+      final request = QuizResultRequest(
+        userId: user.userId,
+        correctCount: widget.correct,
+        totalCount: widget.total,
+        score: widget.correct, // 맞춘 문제를 점수로 사용
+        quizId: 10, // TODO: 나중에 실제 퀴즈 ID로 교체해야 함
+        earnedExp: 10, // 획득 경험치는 10으로 고정
+      );
+
+      final response = await QuizApi.submitQuizResult(request);
+
+      // UserInfo 업데이트
+      final updatedUser = UserResponse(
+        userId: user.userId,
+        email: user.email,
+        nickname: user.nickname,
+        tier: response.currentTier, // Tier 업데이트
+        totalExp: response.totalExp, // Exp 업데이트
+        difficulty: user.difficulty,
+        questionCount: user.questionCount,
+      );
+
+      UserInfo.setUser(updatedUser);
+    } catch (e) {
+      // TODO: 에러 처리 (예: 스낵바 표시)
+      print('퀴즈 결과 전송/처리 실패: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +158,7 @@ class QuizResultScreen extends StatelessWidget {
                   left: 327.5,
                   top: 401,
                   child: Text(
-                    '$total',
+                    '${widget.total}',
                     style: const TextStyle(
                       color: Color(0xFF060710),
                       fontSize: 16,
@@ -166,7 +215,7 @@ class QuizResultScreen extends StatelessWidget {
                   left: 328,
                   top: 473,
                   child: Text(
-                    '$correct',
+                    '${widget.correct}',
                     style: const TextStyle(
                       color: Color(0xFF060710),
                       fontSize: 16,
