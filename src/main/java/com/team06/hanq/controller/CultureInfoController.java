@@ -23,11 +23,13 @@ public class CultureInfoController {
         return service.getAllTitles();
     }
 
+    @Operation(summary = "문화 정보의 title 별 subttile 목록 조회")
     @GetMapping("/title/{title}/subtitles")
     public List<CultureInfo> getSubtitlesByTitle(@PathVariable String title) {
         return service.getSubtitlesByTitle(title);
     }
 
+    @Operation(summary = "특정 id의 문화 정보 조회")
     @GetMapping("/{infoId}")
     public CultureInfo getDetail(@PathVariable Long infoId) {
         return service.getDetail(infoId);
