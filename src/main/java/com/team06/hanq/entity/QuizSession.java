@@ -1,7 +1,7 @@
 package com.team06.hanq.entity;
 
-import lombok.*;
 import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,17 +17,19 @@ public class QuizSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long sessionId;
 
-    @Column(nullable = false)
     private Long userId;
-
-    @Column(nullable = false)
     private Long quizId;
 
+    // 문제 정답 여부
+    private boolean isCorrect;
+
+    // 동일 문제 재도전 시 카운트
+    private int attemptCount;
+
+    // 점수 및 전체 문제 수 (세트 단위)
     private int score;
-    private int correctCount;
     private int totalCount;
 
     private LocalDateTime startedAt;
     private LocalDateTime finishedAt;
 }
-
