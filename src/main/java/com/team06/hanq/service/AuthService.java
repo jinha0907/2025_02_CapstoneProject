@@ -2,6 +2,8 @@ package com.team06.hanq.service;
 
 import com.team06.hanq.dto.*;
 import com.team06.hanq.entity.*;
+import com.team06.hanq.exception.CustomException;
+import com.team06.hanq.exception.ErrorCode;
 import com.team06.hanq.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,12 +22,12 @@ public class AuthService {
     // 🟢 회원가입
     public UserResponseDTO signup(SignUpRequestDTO req) {
         if (userRepo.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
+            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
         }
 
         // 기본 티어: BRONZE
         UserTier defaultTier = tierRepo.findByTierName(UserTier.TierName.BRONZE)
-                .orElseThrow(() -> new IllegalStateException("기본 티어(BRONZE)가 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.INFO_NOT_FOUND));
 
         User user = User.builder()
                 .email(req.getEmail())
@@ -59,16 +61,16 @@ public class AuthService {
     // 🟡 로그인
     public UserResponseDTO login(LoginRequestDTO req) {
         User user = userRepo.findByEmail(req.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("이메일이 존재하지 않습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 올바르지 않습니다.");
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
 
         UserSettings settings = settingsRepo.findAll().stream()
                 .filter(s -> s.getUser().getUserId().equals(user.getUserId()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("유저 설정 정보가 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.SETTINGS_NOT_FOUND));
 
         return UserResponseDTO.builder()
                 .userId(user.getUserId())

@@ -15,7 +15,7 @@ public class UserQuizStatsService {
 
     private final LearningStatsRepository learningStatsRepo;
 
-    // ✅ ① 유저 총 푼 문제 개수
+    // 유저 총 푼 문제 개수
     public int getTotalSolvedQuizzes(Long userId) {
         List<LearningStats> stats = learningStatsRepo.findAll()
                 .stream()
@@ -27,7 +27,7 @@ public class UserQuizStatsService {
                 .sum();
     }
 
-    // ✅ ② 최근 7일간 학습 현황
+    // 최근 7일간 학습 현황
     public List<Map<String, Object>> getWeeklyStats(Long userId) {
         LocalDate sevenDaysAgo = LocalDate.now().minusDays(6);
         List<LearningStats> statsList =

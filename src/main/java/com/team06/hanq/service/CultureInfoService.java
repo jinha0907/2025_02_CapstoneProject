@@ -1,6 +1,8 @@
 package com.team06.hanq.service;
 
 import com.team06.hanq.entity.CultureInfo;
+import com.team06.hanq.exception.CustomException;
+import com.team06.hanq.exception.ErrorCode;
 import com.team06.hanq.repository.CultureInfoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,7 +33,7 @@ public class CultureInfoService {
     // 4️⃣ 특정 항목 상세 조회
     public CultureInfo getDetail(Long infoId) {
         return repo.findById(infoId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 문화 정보가 존재하지 않습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.INFO_NOT_FOUND));
     }
 }
 

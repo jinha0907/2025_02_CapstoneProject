@@ -4,6 +4,8 @@ import com.team06.hanq.dto.QuizResultItemDTO;
 import com.team06.hanq.dto.QuizResultRequestDTO;
 import com.team06.hanq.dto.QuizResultResponseDTO;
 import com.team06.hanq.entity.*;
+import com.team06.hanq.exception.CustomException;
+import com.team06.hanq.exception.ErrorCode;
 import com.team06.hanq.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,7 +30,7 @@ public class QuizService {
     public List<QuizDetails> getQuizForUser(Long userId) {
         // 사용자 설정 불러오기
         UserSettings settings = settingsRepo.findByUser_UserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유저 설정 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.SETTINGS_NOT_FOUND));
 
         int questionCount = settings.getQuestionCount();
         int reviewCount = (questionCount <= 5) ? 1 : 2;
@@ -107,7 +109,7 @@ public class QuizService {
 
         // 유저 경험치 및 티어 갱신
         User user = userRepo.findById(req.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         int newExp = user.getTotalExp() + req.getEarnedExp();
         user.setTotalExp(newExp);
 
