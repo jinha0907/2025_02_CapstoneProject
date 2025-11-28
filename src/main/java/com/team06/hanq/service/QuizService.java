@@ -19,7 +19,6 @@ public class QuizService {
 
     private final QuizDetailsRepository quizDetailsRepo;
     private final UserSettingsRepository settingsRepo;
-    private final UserQuizRepository userQuizRepo;
     private final QuizSessionRepository quizSessionRepo;
     private final LearningStatsRepository learningStatsRepo;
     private final UserRepository userRepo;
@@ -41,7 +40,8 @@ public class QuizService {
                 .filter(session -> !session.isCorrect())
                 .map(QuizSession::getQuizId)
                 .distinct()
-                .toList();
+                .collect(Collectors.toList());
+
 
 
         // 복습 문제 추출
