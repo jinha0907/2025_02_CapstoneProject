@@ -33,6 +33,7 @@ public class QuizService {
         int questionCount = settings.getQuestionCount();
         int reviewCount = (questionCount <= 5) ? 1 : 2;
         int newCount = questionCount - reviewCount;
+        String userDifficulty = settings.getDifficulty().name();
 
         // 유저가 틀린 문제 목록 가져오기
         List<Long> wrongQuizIds = quizSessionRepo.findByUserIdAndQuizId(userId, null)
@@ -51,11 +52,11 @@ public class QuizService {
             reviewQuizzes.addAll(quizDetailsRepo.findAllById(selectedIds));
         } else {
             // 틀린 문제가 부족하면 랜덤 문제로 대체
-            reviewQuizzes.addAll(quizDetailsRepo.findRandomQuizzes(reviewCount));
+            reviewQuizzes.addAll(quizDetailsRepo.findRandomQuizzesByDifficulty(userDifficulty, reviewCount));
         }
 
         // 새 문제 추출
-        List<QuizDetails> newQuizzes = quizDetailsRepo.findRandomQuizzes(newCount);
+        List<QuizDetails> newQuizzes = quizDetailsRepo.findRandomQuizzesByDifficulty(userDifficulty, newCount);
 
         // 문제 통합
         List<QuizDetails> finalList = new ArrayList<>();
