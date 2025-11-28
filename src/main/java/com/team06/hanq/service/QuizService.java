@@ -67,17 +67,20 @@ public class QuizService {
     }
 
     public QuizResultResponseDTO saveQuizResult(QuizResultRequestDTO req) {
-        // 1️⃣ quiz_session 저장
-        QuizSession session = QuizSession.builder()
-                .userId(req.getUserId())
-                .quizId(req.getQuizId())
-                .score(req.getScore())
-                .correctCount(req.getCorrectCount())
-                .totalCount(req.getTotalCount())
-                .startedAt(LocalDateTime.now().minusMinutes(5))
-                .finishedAt(LocalDateTime.now())
-                .build();
-        quizSessionRepo.save(session);
+        // 1️⃣ quiz_session 저장ㅌ
+        for(Long qid : req.getQuizId()) {
+            QuizSession session = QuizSession.builder()
+                    .userId(req.getUserId())
+                    .quizId(qid)
+                    .score(req.getScore())
+                    .correctCount(req.getCorrectCount())
+                    .totalCount(req.getTotalCount())
+                    .startedAt(LocalDateTime.now().minusMinutes(5))
+                    .finishedAt(LocalDateTime.now())
+                    .build();
+            quizSessionRepo.save(session);
+        }
+
 
         // 2️⃣ learning_stats 갱신
         LearningStats stats = learningStatsRepo.findByUserIdAndDate(req.getUserId(), LocalDate.now())
