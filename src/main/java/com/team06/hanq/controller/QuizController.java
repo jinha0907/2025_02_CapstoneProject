@@ -1,10 +1,12 @@
 package com.team06.hanq.controller;
 
+import com.team06.hanq.config.ApiResponseDocs;
 import com.team06.hanq.dto.QuizResultRequestDTO;
 import com.team06.hanq.dto.QuizResultResponseDTO;
 import com.team06.hanq.entity.QuizDetails;
 import com.team06.hanq.service.QuizService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -21,12 +23,16 @@ public class QuizController {
 
     // 오늘의 퀴즈 불러오기
     @Operation(summary = "사용자 맞춤 퀴즈 불러오기", description = "유저의 학습량(questionCount)만큼 문제를 불러옵니다. 일부는 복습 문제로 포함됩니다.")
+    @ApiResponse(responseCode = "200" ,description = "퀴즈 불러오기 성공")
+    @ApiResponseDocs.DefaultErrorResponses
     @GetMapping("/load/{userId}")
     public List<QuizDetails> getQuizForUser(@PathVariable Long userId) {
         return quizService.getQuizForUser(userId);
     }
 
     @Operation(summary = "사용자의 퀴즈 결과 가져오기")
+    @ApiResponse(responseCode = "200", description = "결과 저장 성공")
+    @ApiResponseDocs.DefaultErrorResponses
     @PostMapping("/result")
     public QuizResultResponseDTO saveQuizResult(@RequestBody QuizResultRequestDTO request) {
         return quizService.saveQuizResult(request);
