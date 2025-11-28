@@ -19,7 +19,7 @@ public class QuizController {
 
     private final QuizService quizService;
 
-    // ✅ 1️⃣ 오늘의 퀴즈 불러오기
+    // 오늘의 퀴즈 불러오기
     @Operation(summary = "사용자 맞춤 퀴즈 불러오기", description = "유저의 학습량(questionCount)만큼 문제를 불러옵니다. 일부는 복습 문제로 포함됩니다.")
     @GetMapping("/load/{userId}")
     public List<QuizDetails> getQuizForUser(@PathVariable Long userId) {
