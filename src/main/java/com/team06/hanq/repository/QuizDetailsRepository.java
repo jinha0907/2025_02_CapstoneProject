@@ -17,7 +17,7 @@ public interface QuizDetailsRepository extends JpaRepository<QuizDetails, Long> 
     List<QuizDetails> findRandomQuizzes(@Param("limit") int limit);
 
 
-    // ✅ 수정 — 난이도 기반 랜덤 문제 조회
+    // 난이도 기반 랜덤 문제 조회
     @Query(value = """
     SELECT qd.* FROM quiz_details qd
     JOIN quiz_header qh ON qd.quiz_id = qh.quiz_id
