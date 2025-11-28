@@ -1,5 +1,6 @@
 package com.team06.hanq.service;
 
+import com.team06.hanq.dto.QuizResultItemDTO;
 import com.team06.hanq.dto.QuizResultRequestDTO;
 import com.team06.hanq.dto.QuizResultResponseDTO;
 import com.team06.hanq.entity.*;
@@ -36,11 +37,12 @@ public class QuizService {
         String userDifficulty = settings.getDifficulty().name();
 
         // 유저가 틀린 문제 목록 가져오기
-        List<Long> wrongQuizIds = quizSessionRepo.findByUserIdAndQuizId(userId, null)
-                .stream()
-                .filter(session -> session.getCorrectCount() < session.getTotalCount())
-                .map(session -> session.getQuizId())
-                .collect(Collectors.toList());
+        List<Long> wrongQuizIds = quizSessionRepo.findByUserId(userId).stream()
+                .filter(session -> !session.isCorrect())
+                .map(QuizSession::getQuizId)
+                .distinct()
+                .toList();
+
 
         // 복습 문제 추출
         List<QuizDetails> reviewQuizzes = new ArrayList<>();
@@ -68,13 +70,21 @@ public class QuizService {
     }
 
     public QuizResultResponseDTO saveQuizResult(QuizResultRequestDTO req) {
+        int correctCount = 0;
+
         // quiz_session 저장
-        for(Long qid : req.getQuizId()) {
+        for(QuizResultItemDTO qri : req.getResults()) {
+            boolean isCorrect = qri.isCorrect();
+            if (isCorrect) correctCount++;
+
+            // 기존 시도 횟수 확인
+            int attemptCount = quizSessionRepo.countByUserIdAndQuizId(req.getUserId(), qri.getQuizId()) + 1;
             QuizSession session = QuizSession.builder()
                     .userId(req.getUserId())
-                    .quizId(qid)
+                    .quizId(qri.getQuizId())
+                    .isCorrect(isCorrect)
+                    .attemptCount(attemptCount)
                     .score(req.getScore())
-                    .correctCount(req.getCorrectCount())
                     .totalCount(req.getTotalCount())
                     .startedAt(LocalDateTime.now().minusMinutes(5))
                     .finishedAt(LocalDateTime.now())
@@ -92,7 +102,7 @@ public class QuizService {
                         .correctQuizzes(0)
                         .build());
         stats.setTotalQuizzes(stats.getTotalQuizzes() + req.getTotalCount());
-        stats.setCorrectQuizzes(stats.getCorrectQuizzes() + req.getCorrectCount());
+        stats.setCorrectQuizzes(stats.getCorrectQuizzes() + correctCount);
         learningStatsRepo.save(stats);
 
         // 유저 경험치 및 티어 갱신

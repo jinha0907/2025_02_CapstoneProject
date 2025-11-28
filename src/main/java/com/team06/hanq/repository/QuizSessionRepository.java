@@ -16,4 +16,8 @@ public interface QuizSessionRepository extends JpaRepository<QuizSession, Long> 
     // 유저의 특정 퀴즈 기록
     @Query("SELECT s FROM QuizSession s WHERE s.userId = :userId AND s.quizId = :quizId")
     List<QuizSession> findByUserIdAndQuizId(@Param("userId") Long userId, @Param("quizId") Long quizId);
+
+    List<QuizSession> findByUserId(Long userId);
+
+    int countByUserIdAndQuizId(Long userId, Long quizId);
 }
