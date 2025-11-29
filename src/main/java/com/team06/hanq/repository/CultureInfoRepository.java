@@ -11,4 +11,6 @@ public interface CultureInfoRepository extends JpaRepository<CultureInfo, Long> 
 
     // 특정 title에 해당하는 데이터
     List<CultureInfo> findByTitle(String title);
+
+    List<CultureInfo> findBySubtitle(String subtitle);
 }

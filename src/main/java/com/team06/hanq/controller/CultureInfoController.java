@@ -35,6 +35,15 @@ public class CultureInfoController {
         return service.getSubtitlesByTitle(title);
     }
 
+
+    @Operation(summary = "문화 정보의 title 별 subttile 목록 조회")
+    @ApiResponse(responseCode = "200", description = "문화 정보 subsubtitle 조회 성공")
+    @ApiResponseDocs.DefaultErrorResponses
+    @GetMapping("/title/{subtitle}/subsubtitles")
+    public List<CultureInfo> getSubsubtitlesBySubtitle(@PathVariable String subtitle) {
+        return service.getSubsubtitlesBySubtitle(subtitle);
+    }
+
     @Operation(summary = "특정 id의 문화 정보 조회")
     @ApiResponse(responseCode = "200", description = "문화 정보 조회 성공")
     @ApiResponseDocs.DefaultErrorResponses

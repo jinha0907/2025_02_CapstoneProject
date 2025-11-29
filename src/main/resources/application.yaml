@@ -15,9 +15,4 @@ spring:
 server:
   port: 8080
 
-springdoc:
-  api-docs:
-    path: /v3/api-docs         # Swagger 문서 JSON 경로
-  swagger-ui:
-    path: /swagger-ui.html     # Swagger UI 웹 경로
 

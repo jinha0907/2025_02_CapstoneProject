@@ -16,7 +16,7 @@ public class CultureInfoService {
 
     private final CultureInfoRepository repo;
 
-    // 1️⃣ 전체 title 목록
+    // 전체 title 목록
     public List<String> getAllTitles() {
         return repo.findAll().stream()
                 .map(CultureInfo::getTitle)
@@ -24,13 +24,18 @@ public class CultureInfoService {
                 .collect(Collectors.toList());
     }
 
-    // 2️⃣ 특정 title의 subtitle 목록
+    // 특정 title의 subtitle 목록
     public List<CultureInfo> getSubtitlesByTitle(String title) {
         return repo.findByTitle(title);
     }
 
+    // 특정 subtitle의 subsubtitle 목록
+    public List<CultureInfo> getSubsubtitlesBySubtitle(String subtitle) {
+        return repo.findBySubtitle(subtitle);
+    }
 
-    // 4️⃣ 특정 항목 상세 조회
+
+    // 특정 항목 상세 조회
     public CultureInfo getDetail(Long infoId) {
         return repo.findById(infoId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INFO_NOT_FOUND));
