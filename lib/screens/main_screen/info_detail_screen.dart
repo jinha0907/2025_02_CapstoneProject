@@ -1,33 +1,25 @@
-// lib/screens/info_detail_screen.dart
 import 'package:flutter/material.dart';
 
-/// 실제 내용(긴 텍스트)을 보여주는 디테일 화면
 class InfoDetailScreen extends StatelessWidget {
-  /// 상단에 보여줄 카테고리 이름 (예: '한국의 일상생활')
-  final String categoryTitle;
+  /// 상단 카테고리 이름 (예: '퀴즈 정보 모음', '생활 정보 모음')
+  final String headerTitle;
 
-  /// 말풍선 첫 줄 제목 (예: '한국 문화 생활 정보 01')
-  final String pageTitle;
+  /// 상단 메인 제목 (culture: 서브타이틀, life: 타이틀/서브타이틀 등)
+  final String mainTitle;
 
-  /// 말풍선 두 번째 줄 소제목 (InfoPageScreen에서 선택한 subtitle)
-  final String pageSubtitle;
+  /// (선택) 메인 제목 아래에 붙는 설명 한 줄 (culture: 서브서브타이틀, life: subtitle 등)
+  final String? subTitle;
 
-  /// 디테일 내용을 백엔드에서 불러오는 함수
-  /// (category, title, subtitle) -> Future<String>
-  final Future<String> Function(
-      String category,
-      String title,
-      String subtitle,
-      ) loadDetail;
+  /// infoId로 내용(explanation)을 불러오는 콜백
+  final Future<String> Function() loadDetail;
 
-  /// 뒤로가기 (페이지 리스트로 돌아가기)
   final VoidCallback? onBack;
 
   const InfoDetailScreen({
     super.key,
-    required this.categoryTitle,
-    required this.pageTitle,
-    required this.pageSubtitle,
+    required this.headerTitle,
+    required this.mainTitle,
+    this.subTitle,
     required this.loadDetail,
     this.onBack,
   });
@@ -36,57 +28,47 @@ class InfoDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _TopBarWithBack(
-          onBack: onBack,
-          categoryTitle: categoryTitle,
-        ),
+        _TopBar(onBack: onBack),
         const SizedBox(height: 8),
-        _DetailHeader(
-          title: pageTitle,
-          subtitle: pageSubtitle, // ★ 호랑이 오른쪽 말풍선에 subtitle 사용
+        _Header(
+          headerTitle: headerTitle,
+          mainTitle: mainTitle,
+          subTitle: subTitle,
         ),
-        const SizedBox(height: 24),
-
-        // ===== 디테일 내용: 백엔드에서 비동기로 불러오기 =====
+        const SizedBox(height: 16),
         Expanded(
           child: FutureBuilder<String>(
-            future: loadDetail(categoryTitle, pageTitle, pageSubtitle),
+            future: loadDetail(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
+                return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                return Center(
+                return const Center(
                   child: Text(
-                    '내용을 불러오는 중 오류가 발생했습니다.',
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 14,
-                    ),
+                    '내용을 불러오지 못했어요.\n잠시 후 다시 시도해 주세요.',
+                    textAlign: TextAlign.center,
                   ),
                 );
               }
 
-              final content = snapshot.data ?? '';
+              final text = snapshot.data ?? '표시할 내용이 없습니다.';
 
               return SingleChildScrollView(
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
                   ),
                   child: Text(
-                    content,
+                    text,
                     style: const TextStyle(
                       color: Color(0xFF2C2C2C),
                       fontSize: 14,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w400,
-                      height: 1.4,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -99,102 +81,91 @@ class InfoDetailScreen extends StatelessWidget {
   }
 }
 
-/// 상단 뒤로가기 + 카테고리 이름
-class _TopBarWithBack extends StatelessWidget {
+class _TopBar extends StatelessWidget {
   final VoidCallback? onBack;
-  final String categoryTitle;
 
-  const _TopBarWithBack({
-    this.onBack,
-    required this.categoryTitle,
-  });
+  const _TopBar({this.onBack});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        if (onBack != null)
+    return SizedBox(
+      height: 48,
+      child: Row(
+        children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back),
             onPressed: onBack,
+            icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           ),
-        const SizedBox(width: 4),
-        Text(
-          categoryTitle,
-          style: const TextStyle(
-            color: Color(0xFF2C2C2C),
-            fontSize: 18,
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w600,
-            height: 1.5,
-          ),
-        ),
-      ],
+          const Spacer(),
+        ],
+      ),
     );
   }
 }
 
-/// 상단 호랑이 + 말풍선 헤더
-class _DetailHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
+class _Header extends StatelessWidget {
+  final String headerTitle;
+  final String mainTitle;
+  final String? subTitle;
 
-  const _DetailHeader({
-    required this.title,
-    required this.subtitle,
+  const _Header({
+    required this.headerTitle,
+    required this.mainTitle,
+    this.subTitle,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 90,
-          height: 120,
-          child: Image.asset(
-            'assets/images/tiger_image.png',
-            fit: BoxFit.cover,
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: const Color(0xFFD7CEC3),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Icon(
+            Icons.pets,
+            size: 38,
+            color: Color(0xFF4E7C88),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         Expanded(
-          child: Container(
-            height: 86,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF4F3F6),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(
-                    color: Color(0xFF2C2C2C),
-                    fontSize: 16,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w600,
-                    height: 1.5,
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                headerTitle,
+                style: const TextStyle(
+                  color: Color(0xFF888888),
+                  fontSize: 13,
                 ),
-                const SizedBox(height: 6),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                mainTitle,
+                style: const TextStyle(
+                  color: Color(0xFF2C2C2C),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                ),
+              ),
+              if (subTitle != null && subTitle!.trim().isNotEmpty) ...[
+                const SizedBox(height: 4),
                 Text(
-                  subtitle,
-                  textAlign: TextAlign.left,
+                  subTitle!,
                   style: const TextStyle(
-                    color: Color(0xFF858494),
+                    color: Color(0xFF4F4F4F),
                     fontSize: 14,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w400,
-                    height: 1.2,
+                    height: 1.3,
                   ),
                 ),
               ],
-            ),
+            ],
           ),
         ),
       ],

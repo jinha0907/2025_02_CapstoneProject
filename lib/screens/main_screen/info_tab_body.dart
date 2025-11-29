@@ -1,10 +1,25 @@
-// lib/screens/info_tab_body.dart
 import 'package:flutter/material.dart';
-import 'info_category_screen.dart';
-import 'info_page_screen.dart';
+
+import '../../../api/info_api.dart';
+import '../../../DTO/culture_info.dart';
+import '../../../DTO/life_info.dart';
+
+import 'info_title_screen.dart';
+import 'info_subtitle_screen.dart';
+import 'info_subsubtitle_screen.dart';
 import 'info_detail_screen.dart';
 
-enum InfoStep { root, category, page, detail }
+/// 화면 단계
+///
+/// culture : pickKind → titleList → subtitleList → subsubtitleList → detail
+/// life    : pickKind → titleList → subtitleList → detail
+enum InfoStep {
+  pickKind,
+  titleList,
+  subtitleList,
+  subsubtitleList,
+  detail,
+}
 
 class InfoTabBody extends StatefulWidget {
   const InfoTabBody({super.key});
@@ -14,133 +29,436 @@ class InfoTabBody extends StatefulWidget {
 }
 
 class _InfoTabBodyState extends State<InfoTabBody> {
-  InfoStep _step = InfoStep.root;
+  InfoKind? _kind;
+  InfoStep _step = InfoStep.pickKind;
 
-  // 현재 선택된 데이터들
-  String _currentHeaderTitle = '정보 모음';
-  String _currentHeaderSubtitle = '퀴즈 정보와 생활 정보 모음집';
+  bool _loading = false;
+  String? _errorMessage;
 
-  // 카테고리 / 페이지 데이터
-  List<String> _categories = [];
+  // 루트 화면 텍스트
+  String _rootTitle = '정보 모음';
+  String _rootSubtitle = '퀴즈 정보와 생활 정보를 한 곳에서 볼 수 있어요.';
 
-  // 페이지 리스트: 백엔드에서 받아온 title/subtitle 목록
-  List<String> _pageTitles = [];
-  List<String> _pageSubtitles = [];
+  // 공통 리스트
+  List<String> _titles = [];
+  List<String> _subtitles = [];
+  List<String> _subsubtitles = [];
 
-  // 선택된 값들
-  String _selectedCategory = '';
-  String _selectedPageTitle = '';
-  String _selectedPageSubtitle = '';
+  // culture / life 전체 데이터
+  List<CultureInfo> _cultureInfos = [];
+  List<LifeInfo> _lifeInfos = [];
 
-  // ------ Root 화면에서 퀴즈 정보 모음 클릭 ------
-  void _onQuizRootTap() {
+  // 선택 상태
+  String? _selectedTitle;
+  String? _selectedSubtitle;
+  String? _selectedSubsubtitle;
+
+  CultureInfo? _selectedCultureInfo;
+  LifeInfo? _selectedLifeInfo;
+
+  // ===========================
+  // Kind 선택 (퀴즈 정보 / 생활 정보)
+  // ===========================
+  void _selectKind(InfoKind kind) {
     setState(() {
-      _step = InfoStep.category;
-      _currentHeaderTitle = '퀴즈 정보 모음';
-      _currentHeaderSubtitle = '퀴즈 관련 정보 모음집';
-
-      // TODO: 여기도 나중에 백엔드에서 카테고리 목록을 받아오도록 변경 가능
-      _categories = [
-        '한국 역사 퀴즈',
-        '한국 음식 퀴즈',
-        '한국 예절 퀴즈',
-      ];
+      _kind = kind;
+      _errorMessage = null;
     });
+    _loadTitles();
   }
 
-  // ------ Root 화면에서 생활 정보 모음 클릭 ------
-  void _onLifeRootTap() {
-    setState(() {
-      _step = InfoStep.category;
-      _currentHeaderTitle = '생활 정보 모음';
-      _currentHeaderSubtitle = '한국 생활에 필수적인 정보 모음집';
+  // ===========================
+  // API 호출
+  // ===========================
 
-      // TODO: 백엔드 카테고리 목록으로 교체 가능
-      _categories = [
-        '한국의 일상생활',
-        '한국의 인사 예절',
-        '한국의 직장 생활',
-      ];
+  Future<void> _loadTitles() async {
+    final kind = _kind;
+    if (kind == null) return;
+
+    setState(() {
+      _step = InfoStep.titleList;
+      _loading = true;
+      _errorMessage = null;
+
+      _titles = [];
+      _subtitles = [];
+      _subsubtitles = [];
+      _cultureInfos = [];
+      _lifeInfos = [];
+
+      _selectedTitle = null;
+      _selectedSubtitle = null;
+      _selectedSubsubtitle = null;
+      _selectedCultureInfo = null;
+      _selectedLifeInfo = null;
     });
+
+    try {
+      final titles = await InfoApi.fetchTitles(kind);
+      if (!mounted) return;
+      setState(() {
+        _titles = titles;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = '정보를 불러오지 못했어요.';
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
-  // ------ 카테고리에서 특정 카테고리 클릭 ------
-  void _onCategoryTap(int index, String category) async {
-    // 여기서 백엔드로부터 "title 목록"과 "subtitle 목록"을 받아온다고 가정
-    // 실제 코드에서는 아래 TODO 부분을 http/dio 등으로 교체하면 됨.
-    //
-    // final response = await api.getInfoPageList(category: category);
-    // final titlesFromApi = response.titles;        // List<String>
-    // final subtitlesFromApi = response.subtitles;  // List<String>
-
-    // 데모용 더미 데이터
-    final titlesFromApi = <String>[
-      '한국 문화 생활 정보 01',
-      '한국 문화 생활 정보 02',
-      '한국 문화 생활 정보 03',
-      '한국 문화 생활 정보 04',
-    ];
-    final subtitlesFromApi = <String>[
-      '할인 행사(1+1, 2+1) 활용하기',
-      '대중교통 카드 사용법',
-      '배달 문화 이해하기',
-      '편의점 이용 팁',
-    ];
+  Future<void> _loadSubtitles(String title) async {
+    final kind = _kind;
+    if (kind == null) return;
 
     setState(() {
-      _selectedCategory = category;
-      _pageTitles = titlesFromApi;
-      _pageSubtitles = subtitlesFromApi;
-      _step = InfoStep.page;
+      _step = InfoStep.subtitleList;
+      _loading = true;
+      _errorMessage = null;
+
+      _selectedTitle = title;
+
+      _subtitles = [];
+      _subsubtitles = [];
+      _cultureInfos = [];
+      _lifeInfos = [];
+
+      _selectedSubtitle = null;
+      _selectedSubsubtitle = null;
+      _selectedCultureInfo = null;
+      _selectedLifeInfo = null;
     });
+
+    try {
+      if (kind == InfoKind.culture) {
+        final infos = await InfoApi.fetchCultureInfosByTitle(title);
+        if (!mounted) return;
+
+        // 같은 title 안에서 subtitle 중복 제거
+        final subs = <String>[];
+        for (final info in infos) {
+          if (!subs.contains(info.subtitle)) {
+            subs.add(info.subtitle);
+          }
+        }
+
+        setState(() {
+          _cultureInfos = infos;
+          _subtitles = subs;
+        });
+      } else {
+        final infos = await InfoApi.fetchLifeInfosByTitle(title);
+        if (!mounted) return;
+
+        final subs = infos.map((e) => e.subtitle).toList();
+
+        setState(() {
+          _lifeInfos = infos;
+          _subtitles = subs;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = '목록을 불러오지 못했어요.';
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
-  // ------ 페이지 리스트에서 특정 페이지 클릭 ------
-  void _onPageTap(int index, String pageTitle, String pageSubtitle) {
+  void _onSubtitleSelected(int index, String subtitle) {
+    final kind = _kind;
+    if (kind == null) return;
+
     setState(() {
-      _selectedPageTitle = pageTitle;
-      _selectedPageSubtitle = pageSubtitle;
+      _selectedSubtitle = subtitle;
+      _selectedSubsubtitle = null;
+      _selectedCultureInfo = null;
+      _selectedLifeInfo = null;
+    });
+
+    if (kind == InfoKind.culture) {
+      // culture: subtitle → subsubtitle 목록으로
+      final subsubs = _cultureInfos
+          .where((e) => e.subtitle == subtitle)
+          .map((e) => e.subsubtitle)
+          .toList();
+
+      setState(() {
+        _subsubtitles = subsubs;
+        _step = InfoStep.subsubtitleList;
+      });
+    } else {
+      // life: 바로 detail 로 이동
+      final info = _lifeInfos[index];
+      setState(() {
+        _selectedLifeInfo = info;
+        _step = InfoStep.detail;
+      });
+    }
+  }
+
+  void _onSubsubtitleSelected(int index, String subsubtitle) {
+    final selectedTitle = _selectedTitle;
+    final selectedSubtitle = _selectedSubtitle;
+    if (selectedTitle == null || selectedSubtitle == null) return;
+
+    final info = _cultureInfos.firstWhere(
+          (e) =>
+      e.title == selectedTitle &&
+          e.subtitle == selectedSubtitle &&
+          e.subsubtitle == subsubtitle,
+      orElse: () => _cultureInfos[index],
+    );
+
+    setState(() {
+      _selectedSubsubtitle = subsubtitle;
+      _selectedCultureInfo = info;
       _step = InfoStep.detail;
     });
   }
 
-  // ------ 디테일 내용 백엔드에서 불러오기 ------
-  Future<String> _loadDetailContent(
-      String category,
-      String title,
-      String subtitle,
-      ) async {
-    // TODO: 여기에 실제 백엔드 API 호출 넣기
-    //
-    // final response = await api.getInfoDetail(
-    //   category: category,
-    //   title: title,
-    //   subtitle: subtitle,
-    // );
-    // return response.content;
+  // ===========================
+  // 뒤로 가기
+  // ===========================
 
-    // 데모용 더미 구현
-    await Future.delayed(const Duration(milliseconds: 300));
-    return
-      '[$category]\n$title\n($subtitle)\n\n'
-          '여기에 백엔드에서 받아온 상세 내용을 표시합니다.\n'
-          '실제 구현에서는 위의 TODO 부분에서 API를 호출해서\n'
-          'response.content 같은 값을 리턴하도록 바꾸면 됩니다.';
+  void _goBackFromTitleList() {
+    setState(() {
+      _step = InfoStep.pickKind;
+
+      _titles = [];
+      _subtitles = [];
+      _subsubtitles = [];
+      _cultureInfos = [];
+      _lifeInfos = [];
+
+      _selectedTitle = null;
+      _selectedSubtitle = null;
+      _selectedSubsubtitle = null;
+      _selectedCultureInfo = null;
+      _selectedLifeInfo = null;
+    });
   }
 
-  // ------ “단계별 뒤로가기” ------
-  void _goBackStep() {
+  void _goBackFromSubtitleList() {
     setState(() {
-      if (_step == InfoStep.detail) {
-        _step = InfoStep.page;
-      } else if (_step == InfoStep.page) {
-        _step = InfoStep.category;
-      } else if (_step == InfoStep.category) {
-        _step = InfoStep.root;
-        _currentHeaderTitle = '정보 모음';
-        _currentHeaderSubtitle = '퀴즈 정보와 생활 정보 모음집';
-      }
+      _step = InfoStep.titleList;
+
+      _subtitles = [];
+      _subsubtitles = [];
+      _cultureInfos = [];
+      _lifeInfos = [];
+
+      _selectedSubtitle = null;
+      _selectedSubsubtitle = null;
+      _selectedCultureInfo = null;
+      _selectedLifeInfo = null;
     });
+  }
+
+  void _goBackFromSubsubtitleList() {
+    setState(() {
+      _step = InfoStep.subtitleList;
+
+      _subsubtitles = [];
+      _selectedSubsubtitle = null;
+      _selectedCultureInfo = null;
+    });
+  }
+
+  void _goBackFromDetail() {
+    final kind = _kind;
+    if (kind == InfoKind.culture) {
+      setState(() {
+        _step = InfoStep.subsubtitleList;
+      });
+    } else {
+      setState(() {
+        _step = InfoStep.subtitleList;
+      });
+    }
+  }
+
+  // ===========================
+  // 화면 빌더
+  // ===========================
+
+  Widget _buildBody() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () {
+                switch (_step) {
+                  case InfoStep.titleList:
+                    _loadTitles();
+                    break;
+                  case InfoStep.subtitleList:
+                    if (_selectedTitle != null) {
+                      _loadSubtitles(_selectedTitle!);
+                    }
+                    break;
+                  case InfoStep.subsubtitleList:
+                  case InfoStep.detail:
+                  case InfoStep.pickKind:
+                    _goBackFromTitleList();
+                    break;
+                }
+              },
+              child: const Text('다시 시도'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    switch (_step) {
+      case InfoStep.pickKind:
+        return _buildPickKind();
+      case InfoStep.titleList:
+        return _buildTitleList();
+      case InfoStep.subtitleList:
+        return _buildSubtitleList();
+      case InfoStep.subsubtitleList:
+        return _buildSubsubtitleList();
+      case InfoStep.detail:
+        return _buildDetail();
+    }
+  }
+
+  // root: culture / life 선택 화면
+  Widget _buildPickKind() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        Text(
+          _rootTitle,
+          style: const TextStyle(
+            color: Color(0xFF2C2C2C),
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _rootSubtitle,
+          style: const TextStyle(
+            color: Color(0xFF666666),
+            fontSize: 13,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _RootCard(
+          icon: Icons.quiz_outlined,
+          title: '퀴즈 정보 모음',
+          subtitle: '퀴즈에 등장하는 문화 정보를 모아봤어요.',
+          onTap: () => _selectKind(InfoKind.culture),
+        ),
+        const SizedBox(height: 16),
+        _RootCard(
+          icon: Icons.home_outlined,
+          title: '생활 정보 모음',
+          subtitle: '한국 생활에 꼭 필요한 정보를 볼 수 있어요.',
+          onTap: () => _selectKind(InfoKind.life),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTitleList() {
+    final kind = _kind;
+    if (kind == null) return const SizedBox.shrink();
+
+    return InfoTitleScreen(
+      headerTitle: kind.label,
+      headerSubtitle: kind == InfoKind.culture
+          ? '관심 있는 문화 주제를 선택해 보세요.'
+          : '관심 있는 생활 정보를 선택해 보세요.',
+      titles: _titles,
+      onTitleTap: _loadSubtitles,
+      onBack: _goBackFromTitleList,
+    );
+  }
+
+  Widget _buildSubtitleList() {
+    final kind = _kind;
+    final selectedTitle = _selectedTitle ?? '';
+    if (kind == null) return const SizedBox.shrink();
+
+    return InfoSubtitleScreen(
+      headerTitle: selectedTitle,
+      headerSubtitle: kind == InfoKind.culture
+          ? '세부 문화 주제를 선택해 주세요.'
+          : '보고 싶은 정보를 선택해 주세요.',
+      subtitles: _subtitles,
+      onSubtitleTap: _onSubtitleSelected,
+      onBack: _goBackFromSubtitleList,
+    );
+  }
+
+  Widget _buildSubsubtitleList() {
+    final selectedSubtitle = _selectedSubtitle ?? '';
+
+    return InfoSubsubtitleScreen(
+      headerTitle: selectedSubtitle,
+      headerSubtitle: '더 구체적인 내용을 선택해 주세요.',
+      subsubtitles: _subsubtitles,
+      onSubsubtitleTap: _onSubsubtitleSelected,
+      onBack: _goBackFromSubsubtitleList,
+    );
+  }
+
+  Widget _buildDetail() {
+    final kind = _kind;
+    if (kind == null) return const SizedBox.shrink();
+
+    if (kind == InfoKind.culture) {
+      final info = _selectedCultureInfo;
+      if (info == null) return const SizedBox.shrink();
+
+      return InfoDetailScreen(
+        headerTitle: kind.label,
+        mainTitle: _selectedSubtitle ?? info.subtitle,
+        subTitle: _selectedSubsubtitle ?? info.subsubtitle,
+        loadDetail: () =>
+            InfoApi.fetchDetail(kind: InfoKind.culture, infoId: info.infoId),
+        onBack: _goBackFromDetail,
+      );
+    } else {
+      final info = _selectedLifeInfo;
+      if (info == null) return const SizedBox.shrink();
+
+      return InfoDetailScreen(
+        headerTitle: kind.label,
+        mainTitle: _selectedTitle ?? info.title,
+        subTitle: info.subtitle,
+        loadDetail: () =>
+            InfoApi.fetchDetail(kind: InfoKind.life, infoId: info.infoId),
+        onBack: _goBackFromDetail,
+      );
+    }
   }
 
   @override
@@ -148,178 +466,69 @@ class _InfoTabBodyState extends State<InfoTabBody> {
     return Container(
       color: const Color(0xFFEDE8E3),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: _buildStepContent(),
-      ),
-    );
-  }
-
-  Widget _buildStepContent() {
-    switch (_step) {
-      case InfoStep.root:
-        return _buildRoot();
-      case InfoStep.category:
-        return InfoCategoryScreen(
-          headerTitle: _currentHeaderTitle,
-          headerSubtitle: _currentHeaderSubtitle,
-          categories: _categories,
-          onCategoryTap: _onCategoryTap,
-          onBack: _goBackStep,
-        );
-      case InfoStep.page:
-        return InfoPageScreen(
-          categoryTitle: _selectedCategory,
-          titles: _pageTitles,
-          subtitles: _pageSubtitles,
-          onPageTap: _onPageTap,
-          onBack: _goBackStep,
-        );
-      case InfoStep.detail:
-        return InfoDetailScreen(
-          categoryTitle: _selectedCategory,
-          pageTitle: _selectedPageTitle,
-          pageSubtitle: _selectedPageSubtitle, // ★ 여기로 subtitle 전달
-          loadDetail: _loadDetailContent,      // ★ 실제 본문은 여기서 로드
-          onBack: _goBackStep,
-        );
-    }
-  }
-
-  // ----- Root 화면: 퀴즈 정보 모음 / 생활 정보 모음 -----
-  Widget _buildRoot() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 80),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _HeaderArea(),
-          const SizedBox(height: 32),
-
-          _InfoEntryCard(
-            text: '퀴즈 정보 모음',
-            onTap: _onQuizRootTap,
-          ),
-          const SizedBox(height: 20),
-
-          _InfoEntryCard(
-            text: '생활 정보 모음',
-            onTap: _onLifeRootTap,
-          ),
-          const SizedBox(height: 24),
-        ],
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: _buildBody(),
       ),
     );
   }
 }
 
-/// 상단 캐릭터 + 말풍선 (Root 전용)
-class _HeaderArea extends StatelessWidget {
-  const _HeaderArea();
+class _RootCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 160,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          SizedBox(
-            width: 90,
-            height: 120,
-            child: Image.asset(
-              'assets/images/tiger_image.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Container(
-              height: 110,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4F3F6),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '정보 모음',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFF2C2C2C),
-                      fontSize: 16,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w700,
-                      height: 1.5,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    '퀴즈 정보와 생활 정보 모음집',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFF858494),
-                      fontSize: 14,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w400,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Root 카드
-class _InfoEntryCard extends StatelessWidget {
-  final String text;
-  final VoidCallback? onTap;
-
-  const _InfoEntryCard({
-    required this.text,
-    this.onTap,
+  const _RootCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.lightbulb_outline,
-              size: 48,
-              color: Color(0xFF4E7C88),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                text,
-                style: const TextStyle(
-                  color: Color(0xFF2C2C2C),
-                  fontSize: 20,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w600,
-                  height: 1.3,
+    return Material(
+      color: const Color(0xFFD7CEC3),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 40,
+                color: const Color(0xFF4E7C88),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Color(0xFF2C2C2C),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFF4F4F4F),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
