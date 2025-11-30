@@ -1,10 +1,12 @@
+// lib/screens/quiz_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../router.dart';
 import '../api/quiz_api.dart';
-import '../DTO/quiz_load.dart';      // QuizLoadItem 정의된 파일
-import '../info/user_info.dart';    // UserSession 등 (userId 얻기용)
+import '../DTO/quiz_load.dart';             // QuizLoadItem
+import '../DTO/quiz_result_request.dart';  // 🔹 QuizResultItem 사용
+import '../info/user_info.dart';
 
 /// ===== 모델 =====
 class Choice {
@@ -15,9 +17,16 @@ class Choice {
 }
 
 class Question {
+  final int quizId;            // 🔹 서버의 quizId
   final String title;
   final List<Choice> choices;
-  const Question({required this.title, required this.choices});
+
+  const Question({
+    required this.quizId,
+    required this.title,
+    required this.choices,
+  });
+
   int get answerIndex => choices.indexWhere((c) => c.isAnswer);
 }
 
@@ -33,7 +42,11 @@ class QuizController {
   int correctCount = 0;
   QuizStage stage = QuizStage.question;
 
-  QuizController(this.questions);
+  // 🔹 각 문제별 "처음 선택이 정답이었는지" 기록
+  final List<bool> firstCorrectList;
+
+  QuizController(this.questions)
+      : firstCorrectList = List<bool>.filled(questions.length, false);
 
   Question get q => questions[index];
   int get total => questions.length;
@@ -53,24 +66,43 @@ class QuizController {
     if (stage == QuizStage.question) {
       stage = QuizStage.feedback;
     }
-    selected ??= i; // 화면 첫 선택 기록
-    firstSelected ??= i; // ✅ 채점용 첫 선택 기록(이미 있으면 유지)
-    selected = i; // 화면용 현재 선택은 언제든 변경 가능
+    selected ??= i;        // 화면 첫 선택 기록
+    firstSelected ??= i;   // 채점용 첫 선택 기록(이미 있으면 유지)
+    selected = i;          // 화면용 현재 선택은 언제든 변경 가능
   }
 
   /// ✅ 다음 문제로 진행(채점은 '처음 선택' 기준)
   bool next() {
     if (stage != QuizStage.feedback) return false;
 
-    if (isFirstCorrect) correctCount++;
+    // 현재 문제의 정답 여부 기록
+    final bool firstWasCorrect = isFirstCorrect;
+    firstCorrectList[index] = firstWasCorrect;
 
-    if (isLast) return true;
+    if (firstWasCorrect) {
+      correctCount++;
+    }
+
+    if (isLast) {
+      // 마지막 문제면 true 리턴 → 결과 화면으로 이동
+      return true;
+    }
 
     index++;
     selected = null;
-    firstSelected = null; // ✅ 다음 문제에서 다시 초기화
+    firstSelected = null; // 다음 문제에서 다시 초기화
     stage = QuizStage.question;
     return false;
+  }
+
+  /// 🔹 /quiz/result 에 보낼 results 리스트 생성
+  List<QuizResultItem> buildResultItems() {
+    return List<QuizResultItem>.generate(questions.length, (i) {
+      return QuizResultItem(
+        quizId: questions[i].quizId,
+        correct: firstCorrectList[i],
+      );
+    });
   }
 }
 
@@ -97,6 +129,16 @@ class _QuizScreenState extends State<QuizScreen> {
       final int userId = UserInfo.currentUser!.userId;
       final List<QuizLoadItem> items = await QuizApi.loadQuiz(userId);
 
+      // 서버가 빈 리스트를 줄 수도 있으니 방어
+      if (items.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _errorMessage = '오늘 풀 수 있는 퀴즈가 없습니다.';
+          _isLoading = false;
+        });
+        return;
+      }
+
       // 🔁 QuizLoadItem -> Question/Choice 변환
       final questions = items.map((item) {
         final List<String> choices = item.choices;
@@ -120,6 +162,7 @@ class _QuizScreenState extends State<QuizScreen> {
         }
 
         return Question(
+          quizId: item.quizHeader.quizId, // 🔹 quizId 전달
           title: item.question,
           choices: choiceModels,
         );
@@ -158,12 +201,15 @@ class _QuizScreenState extends State<QuizScreen> {
     if (c.stage != QuizStage.feedback) return;
     final goResult = c.next();
     if (goResult && mounted) {
-      // ✅ 점수/문항 수를 함께 결과 화면으로 전달
+      // ✅ 점수/문항 수 + 문제별 결과를 함께 결과 화면으로 전달
+      final results = c.buildResultItems();
+
       context.go(
         R.quizResult,
         extra: {
           'total': c.total,
           'correct': c.correctCount,
+          'results': results,
         },
       );
     } else {
@@ -280,7 +326,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                 ),
 
-                // 피드백 패널 (스크롤 + 호랑이 가운데 정렬)
+                // 피드백 패널
                 if (c.stage == QuizStage.feedback &&
                     c.selectedChoice != null)
                   Positioned(
@@ -288,7 +334,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     top: 243,
                     child: SizedBox(
                       width: 333,
-                      height: 200, // 필요하면 여기 높이 조절
+                      height: 200,
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -298,7 +344,7 @@ class _QuizScreenState extends State<QuizScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center, // 🔹 세로 가운데 정렬
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Image.asset(
                               'assets/images/tiger_image.png',
@@ -307,13 +353,10 @@ class _QuizScreenState extends State<QuizScreen> {
                               fit: BoxFit.contain,
                             ),
                             const SizedBox(width: 12),
-                            // 🔹 이 영역이 스크롤 가능
                             Expanded(
                               child: SingleChildScrollView(
                                 child: Text(
-                                  c.isCorrectNow
-                                      ? '${c.selectedChoice!.explanation}'
-                                      : '${c.selectedChoice!.explanation}',
+                                  c.selectedChoice!.explanation,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 13,
@@ -331,11 +374,11 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                   ),
 
-                // 보기들 (높이/간격 줄이기)
+                // 보기들
                 for (int i = 0; i < c.q.choices.length; i++)
                   Positioned(
                     left: 20,
-                    top: 450 + (i * 60), // 🔹 간격 70 → 60으로 줄임
+                    top: 450 + (i * 60),
                     child: _OptionTile(
                       letter: String.fromCharCode(65 + i),
                       text: c.q.choices[i].text,
@@ -406,7 +449,7 @@ class _OptionTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 335,
-        height: 52, // 🔹 기존 60 → 52로 줄임
+        height: 52,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(8),
@@ -415,9 +458,9 @@ class _OptionTile extends StatelessWidget {
           children: [
             Positioned(
               left: 16,
-              top: 10, // 🔹 살짝 위로 올림 (12 → 10)
+              top: 10,
               child: Container(
-                width: 32, // 🔹 기존 36 → 32
+                width: 32,
                 height: 32,
                 decoration: const BoxDecoration(
                   color: Color(0xFFEDE8E3),
@@ -427,7 +470,7 @@ class _OptionTile extends StatelessWidget {
                 child: isSelected
                     ? const Icon(
                   Icons.check,
-                  size: 18, // 🔹 아이콘도 살짝 줄임
+                  size: 18,
                   color: Color(0xFF4E7C88),
                 )
                     : Text(
@@ -443,7 +486,7 @@ class _OptionTile extends StatelessWidget {
             ),
             Positioned(
               left: 70,
-              top: 16, // 🔹 텍스트도 20 → 16으로 내려서 가운데 느낌
+              top: 16,
               child: SizedBox(
                 width: 250,
                 child: Text(

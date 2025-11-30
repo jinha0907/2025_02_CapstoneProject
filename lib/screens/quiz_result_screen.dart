@@ -1,3 +1,4 @@
+// lib/screens/quiz_result_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../DTO/quiz_result_request.dart';
@@ -9,11 +10,13 @@ import '../router.dart';
 class QuizResultScreen extends StatefulWidget {
   final int total;
   final int correct;
+  final List<QuizResultItem> results; // 🔹 추가
 
   const QuizResultScreen({
     super.key,
     this.total = 2, // 기본값 (직접 접근 시 대비)
     this.correct = 1,
+    this.results = const [],
   });
 
   @override
@@ -34,11 +37,10 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
     try {
       final request = QuizResultRequest(
         userId: user.userId,
-        correctCount: widget.correct,
+        results: widget.results,     // 🔹 문제별 결과
         totalCount: widget.total,
-        score: widget.correct, // 맞춘 문제를 점수로 사용
-        quizId: 10, // TODO: 나중에 실제 퀴즈 ID로 교체해야 함
-        earnedExp: 10, // 획득 경험치는 10으로 고정
+        score: widget.correct,       // 맞춘 문제 수 = 점수
+        earnedExp: 10,               // 정책에 맞게 조정 가능
       );
 
       final response = await QuizApi.submitQuizResult(request);
@@ -48,8 +50,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
         userId: user.userId,
         email: user.email,
         nickname: user.nickname,
-        tier: response.currentTier, // Tier 업데이트
-        totalExp: response.totalExp, // Exp 업데이트
+        tier: response.currentTier,      // Tier 업데이트
+        totalExp: response.totalExp,     // Exp 업데이트
         difficulty: user.difficulty,
         questionCount: user.questionCount,
       );

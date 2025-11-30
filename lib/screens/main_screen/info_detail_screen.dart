@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
 
 class InfoDetailScreen extends StatelessWidget {
-  /// 상단 카테고리 이름 (예: '퀴즈 정보 모음', '생활 정보 모음')
-  final String headerTitle;
-
-  /// 상단 메인 제목 (culture: 서브타이틀, life: 타이틀/서브타이틀 등)
-  final String mainTitle;
-
-  /// (선택) 메인 제목 아래에 붙는 설명 한 줄 (culture: 서브서브타이틀, life: subtitle 등)
-  final String? subTitle;
-
-  /// infoId로 내용(explanation)을 불러오는 콜백
+  final String headerTitle;   // '퀴즈 정보 모음', '생활 정보 모음'
+  final String mainTitle;     // 메인 제목
+  final String? subTitle;     // culture: subsubtitle, life: subtitle
   final Future<String> Function() loadDetail;
-
   final VoidCallback? onBack;
 
   const InfoDetailScreen({
@@ -30,12 +22,16 @@ class InfoDetailScreen extends StatelessWidget {
       children: [
         _TopBar(onBack: onBack),
         const SizedBox(height: 8),
-        _Header(
-          headerTitle: headerTitle,
+
+        /// ⭐ 변경된 상단: 호랑이 + 말풍선
+        _TigerHeader(
           mainTitle: mainTitle,
           subTitle: subTitle,
         ),
-        const SizedBox(height: 16),
+
+        const SizedBox(height: 20),
+
+        /// 내용 영역
         Expanded(
           child: FutureBuilder<String>(
             future: loadDetail(),
@@ -57,8 +53,7 @@ class InfoDetailScreen extends StatelessWidget {
               return SingleChildScrollView(
                 child: Container(
                   width: double.infinity,
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
@@ -103,13 +98,12 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
-  final String headerTitle;
+/// ⭐ 새로 작성된 호랑이 + 말풍선 Header
+class _TigerHeader extends StatelessWidget {
   final String mainTitle;
   final String? subTitle;
 
-  const _Header({
-    required this.headerTitle,
+  const _TigerHeader({
     required this.mainTitle,
     this.subTitle,
   });
@@ -117,55 +111,55 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: const Color(0xFFD7CEC3),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Icon(
-            Icons.pets,
-            size: 38,
-            color: Color(0xFF4E7C88),
+        // 호랑이 이미지
+        SizedBox(
+          width: 80,
+          height: 120,
+          child: Image.asset(
+            'assets/images/tiger_image.png',
+            fit: BoxFit.contain,
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
+
+        // 말풍선 스타일 박스
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                headerTitle,
-                style: const TextStyle(
-                  color: Color(0xFF888888),
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                mainTitle,
-                style: const TextStyle(
-                  color: Color(0xFF2C2C2C),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  height: 1.3,
-                ),
-              ),
-              if (subTitle != null && subTitle!.trim().isNotEmpty) ...[
-                const SizedBox(height: 4),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F3F6),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
                 Text(
-                  subTitle!,
+                  mainTitle,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Color(0xFF4F4F4F),
-                    fontSize: 14,
+                    color: Color(0xFF2C2C2C),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                     height: 1.3,
                   ),
                 ),
+                if (subTitle != null && subTitle!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    subTitle!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xFF666666),
+                      fontSize: 14,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ],

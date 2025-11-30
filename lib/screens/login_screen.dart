@@ -23,6 +23,13 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loginFailed = false;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 이미지를 미리 캐시에 로드하여 빌드 성능 향상
+    precacheImage(const AssetImage('assets/images/tiger_image.png'), context);
+  }
+
+  @override
   void dispose() {
     _idController.dispose();
     _pwController.dispose();

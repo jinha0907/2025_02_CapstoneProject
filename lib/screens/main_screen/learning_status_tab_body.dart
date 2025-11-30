@@ -1,3 +1,4 @@
+// lib/screens/tabs/learning_status_tab_body.dart  (경로는 네 프로젝트에 맞게)
 import 'package:flutter/material.dart';
 import 'package:korean_culture_quiz/widgets/weekly_study_chart.dart';
 
@@ -11,8 +12,8 @@ class LearningStatusTabBody extends StatelessWidget {
     super.key,
     required this.weeklyData,
     this.tierName = '새싹',
-    this.totalQuizCount = 30,
-    this.completionRatio = 0.2,
+    this.totalQuizCount = 0,
+    this.completionRatio = 0.0,
   });
 
   @override

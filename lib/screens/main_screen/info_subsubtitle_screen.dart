@@ -22,11 +22,14 @@ class InfoSubsubtitleScreen extends StatelessWidget {
       children: [
         _TopBar(onBack: onBack),
         const SizedBox(height: 8),
-        _Header(
+
+        _TigerHeader(
           title: headerTitle,
           subtitle: headerSubtitle,
         ),
-        const SizedBox(height: 20),
+
+        const SizedBox(height: 32),
+
         Expanded(
           child: ListView.separated(
             itemCount: subsubtitles.length,
@@ -67,11 +70,11 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
+class _TigerHeader extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _Header({
+  const _TigerHeader({
     required this.title,
     required this.subtitle,
   });
@@ -79,48 +82,62 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center, // ⬅️ 여기 center!
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: const Color(0xFFD7CEC3),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Icon(
-            Icons.pets,
-            size: 38,
-            color: Color(0xFF4E7C88),
+        // 호랑이
+        SizedBox(
+          width: 80,
+          height: 120, // ⬅️ 네가 바꿔준 120 유지
+          child: Image.asset(
+            'assets/images/tiger_image.png',
+            fit: BoxFit.contain,
           ),
         ),
-        const SizedBox(width: 16),
+
+        const SizedBox(width: 12),
+
+        // 말풍선 카드
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Color(0xFF2C2C2C),
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F3F6),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF2C2C2C),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  color: Color(0xFF666666),
-                  fontSize: 13,
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF858494),
+                    fontSize: 14,
+                    height: 1.2,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
     );
   }
 }
+
+
 
 class _Card extends StatelessWidget {
   final String title;
@@ -133,34 +150,48 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFD7CEC3),
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10), // 좌우 10px
+      child: Material(
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.chevron_right,
-                size: 26,
-                color: Color(0xFF4E7C88),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFF2C2C2C),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    height: 1.4,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.lightbulb_outline,
+                  size: 26,
+                  color: Color(0xFF4E7C88),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Color(0xFF2C2C2C),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

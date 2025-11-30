@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../info/user_info.dart';
 import '../../router.dart';
 
@@ -7,6 +8,9 @@ import 'main_tab_body.dart';
 import 'info_tab_body.dart';
 import 'settings_tab_body.dart';
 import 'learning_status_tab_body.dart';
+
+import '../../api/quiz_api.dart';
+import '../../DTO/quiz_stats.dart';
 
 class MainTabScaffold extends StatefulWidget {
   const MainTabScaffold({super.key});
@@ -22,17 +26,22 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
   String _tier = '';
 
   /// 주간 학습량(월~일)
-  List<double> weeklyData = [2.5, 3.0, 4.2, 3.5, 5.0, 4.8, 3.3];
+  List<double> weeklyData = List.filled(7, 0.0);
 
-  void setWeeklyData(List<double> data) {
-    if (data.length != 7) return;
-    setState(() => weeklyData = data);
-  }
+  /// 전체 푼 퀴즈 개수
+  int _totalQuizCount = 0;
+
+  /// 학습 달성도(0.0~1.0)
+  double _completionRatio = 0.0;
+
+  bool _loadingStats = true;
+  String? _statsError;
 
   @override
   void initState() {
     super.initState();
     _updateUserInfo();
+    _loadQuizStats();
   }
 
   void _updateUserInfo() {
@@ -40,39 +49,109 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
     if (user != null) {
       setState(() {
         _name = user.nickname;
-        _tier = user.tier;
+        _tier = user.tier; // 예: "BRONZE", "SILVER" 등
+      });
+    }
+  }
+
+  Future<void> _loadQuizStats() async {
+    try {
+      setState(() {
+        _loadingStats = true;
+        _statsError = null;
+      });
+
+      // 주간 + 전체 병렬 호출
+      final weeklyFuture = QuizApi.fetchWeeklyQuizCounts();
+      final totalFuture = QuizApi.fetchTotalQuizCount();
+
+      final results = await Future.wait([
+        weeklyFuture,
+        totalFuture,
+      ]);
+
+      final List<WeeklyQuizCount> weeklyList =
+      results[0] as List<WeeklyQuizCount>;
+      final int totalCount = results[1] as int;
+
+      // 주간 데이터 -> List<double> 변환 (월~일 7개)
+      final List<double> newWeeklyData = List.filled(7, 0.0);
+      for (int i = 0; i < weeklyList.length && i < 7; i++) {
+        newWeeklyData[i] = weeklyList[i].count.toDouble();
+      }
+
+      // 🔸 completionRatio 계산 (예시로, 유저 목표 questionCount 기준)
+      final user = UserInfo.currentUser;
+      double completion = 0.0;
+      if (user != null && user.questionCount != null && user.questionCount > 0) {
+        completion = totalCount / user.questionCount;
+      }
+
+      setState(() {
+        weeklyData = newWeeklyData;
+        _totalQuizCount = totalCount;
+        _completionRatio = completion.clamp(0.0, 1.0);
+        _loadingStats = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loadingStats = false;
+        _statsError = '학습 통계를 불러오지 못했습니다.\n$e';
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // 통계 로딩 중이어도 기본 UI는 보여주고 숫자만 나중에 갱신되게 놔두는 쪽으로 갈게
     return Scaffold(
       backgroundColor: const Color(0xFFEDE8E3),
 
-      // ===== 상단 + 탭 내용 =====
       body: SafeArea(
-        child: IndexedStack(
-          index: _currentIndex,
+        child: Stack(
           children: [
-            MainTabBody(
-              name: _name,
-              tier: _tier,
-              weeklyData: weeklyData,
-              // 🔸 라우팅은 여기서만 처리
-              onTodayQuizTap: () => context.go(R.quiz),
+            IndexedStack(
+              index: _currentIndex,
+              children: [
+                MainTabBody(
+                  name: _name,
+                  tier: _tier,
+                  weeklyData: weeklyData,    // ✅ 메인 탭 차트도 API 데이터 사용
+                  onTodayQuizTap: () => context.go(R.quiz),
+                ),
+                const InfoTabBody(),
+                LearningStatusTabBody(
+                  weeklyData: weeklyData,    // ✅ 학습현황 차트도 동일 데이터 사용
+                  tierName: _tier,           // ✅ user_info에서 가져온 티어
+                  totalQuizCount: _totalQuizCount,
+                  completionRatio: _completionRatio,
+                ),
+                const SettingsTabBody(),
+              ],
             ),
-            const InfoTabBody(),
 
-            // ✅ 3번째: 학습 현황 탭 실제 화면 연결
-            LearningStatusTabBody(
-              weeklyData: weeklyData,
-              tierName: _tier,       // 나중에 백엔드 값으로 교체 가능
-              totalQuizCount: 30,      // 예시 값
-              completionRatio: 0.3,    // 예: 전체 퀴즈 중 30% 완료
-            ),
-
-            const SettingsTabBody(),
+            // 에러 표시 (필요하면)
+            if (_statsError != null)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 80,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      _statsError!,
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

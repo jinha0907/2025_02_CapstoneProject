@@ -37,7 +37,7 @@ class _InfoTabBodyState extends State<InfoTabBody> {
 
   // 루트 화면 텍스트
   String _rootTitle = '정보 모음';
-  String _rootSubtitle = '퀴즈 정보와 생활 정보를 한 곳에서 볼 수 있어요.';
+  String _rootSubtitle = '퀴즈 정보와 생활 정보 모음집';
 
   // 공통 리스트
   List<String> _titles = [];
@@ -347,43 +347,168 @@ class _InfoTabBodyState extends State<InfoTabBody> {
     }
   }
 
+  // ===========================
   // root: culture / life 선택 화면
+  // ===========================
+
   Widget _buildPickKind() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 24),
-        Text(
-          _rootTitle,
-          style: const TextStyle(
-            color: Color(0xFF2C2C2C),
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-          ),
+    final width = MediaQuery.of(context).size.width;
+
+    return SingleChildScrollView(
+      child: SizedBox(
+        width: width,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 24),
+
+            // ===== 상단 호랑이 + 말풍선 카드 =====
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 80,
+                    height:120,
+                    child: Image.asset(
+                      'assets/images/tiger_image.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF4F3F6),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            _rootTitle,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF2C2C2C),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _rootSubtitle,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF858494),
+                              fontSize: 14,
+                              height: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 40),
+
+            // ===== "퀴즈 정보 모음" 카드 =====
+            GestureDetector(
+              onTap: () => _selectKind(InfoKind.culture),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10),   // ⬅ 좌우 10px
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.lightbulb_outline,  // ⬅ 전구 아이콘
+                      size: 28,
+                      color: Color(0xFF4E7C88),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        '퀴즈 정보 모음',
+                        style: TextStyle(
+                          color: Color(0xFF2C2C2C),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    // ⛔ 오른쪽 화살표 제거 (아무것도 넣지 않음)
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+// ===== "생활 정보 모음" 카드 =====
+            GestureDetector(
+              onTap: () => _selectKind(InfoKind.life),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10),   // ⬅ 좌우 10px
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.lightbulb_outline,  // ⬅ 전구 아이콘
+                      size: 28,
+                      color: Color(0xFF4E7C88),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        '생활 정보 모음',
+                        style: TextStyle(
+                          color: Color(0xFF2C2C2C),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    // ⛔ 오른쪽 화살표 제거
+                  ],
+                ),
+              ),
+            ),
+
+
+            const SizedBox(height: 32),
+          ],
         ),
-        const SizedBox(height: 6),
-        Text(
-          _rootSubtitle,
-          style: const TextStyle(
-            color: Color(0xFF666666),
-            fontSize: 13,
-          ),
-        ),
-        const SizedBox(height: 24),
-        _RootCard(
-          icon: Icons.quiz_outlined,
-          title: '퀴즈 정보 모음',
-          subtitle: '퀴즈에 등장하는 문화 정보를 모아봤어요.',
-          onTap: () => _selectKind(InfoKind.culture),
-        ),
-        const SizedBox(height: 16),
-        _RootCard(
-          icon: Icons.home_outlined,
-          title: '생활 정보 모음',
-          subtitle: '한국 생활에 꼭 필요한 정보를 볼 수 있어요.',
-          onTap: () => _selectKind(InfoKind.life),
-        ),
-      ],
+      ),
     );
   }
 
@@ -469,6 +594,36 @@ class _InfoTabBodyState extends State<InfoTabBody> {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: _buildBody(),
       ),
+    );
+  }
+}
+
+// ===== 아이콘 자리에 들어갈 위젯 (여기다 네가 제공했던 아이콘 위젯을 넣으면 됨) =====
+
+class _QuizInfoIcon extends StatelessWidget {
+  const _QuizInfoIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: 여기 대신에 네가 제공했던 "퀴즈 정보" 아이콘 위젯을 넣어줘
+    return const Icon(
+      Icons.quiz_outlined,
+      size: 28,
+      color: Color(0xFF4E7C88),
+    );
+  }
+}
+
+class _LifeInfoIcon extends StatelessWidget {
+  const _LifeInfoIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: 여기 대신에 네가 제공했던 "생활 정보" 아이콘 위젯을 넣어줘
+    return const Icon(
+      Icons.home_outlined,
+      size: 28,
+      color: Color(0xFF4E7C88),
     );
   }
 }

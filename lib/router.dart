@@ -10,7 +10,7 @@ import 'screens/quiz_result_screen.dart';
 
 // 메인 탭
 import 'screens/main_screen/main_tab_scaffold.dart';
-
+import '../DTO/quiz_result_request.dart'; // ㅅ'
 // 설정 내부
 import 'screens/main_screen/settings/difficulty_setting_screen.dart';
 import 'screens/main_screen/settings/amount_setting_screen.dart';
@@ -64,14 +64,22 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: R.quizResult,
       builder: (context, state) {
-        final extra = state.extra as Map<String, int>?;
-        final total = extra?['total'] ?? 2;
-        final correct = extra?['correct'] ?? 1;
-        return QuizResultScreen(total: total, correct: correct);
+        final extra = state.extra as Map<String, dynamic>?;
+        final total = extra?['total'] as int? ?? 2;
+        final correct = extra?['correct'] as int? ?? 1;
+        final results =
+            (extra?['results'] as List<QuizResultItem>?) ?? const [];
+
+        return QuizResultScreen(
+          total: total,
+          correct: correct,
+          results: results,
+        );
       },
     ),
 
-    
+
+
     // 🔹 난이도 설정
     GoRoute(
       path: R.difficulty,
