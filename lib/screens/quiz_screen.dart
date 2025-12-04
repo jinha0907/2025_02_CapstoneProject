@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../router.dart';
 import '../api/quiz_api.dart';
-import '../DTO/quiz_load.dart';             // QuizLoadItem
-import '../DTO/quiz_result_request.dart';  // 🔹 QuizResultItem 사용
+import '../DTO/quiz_load.dart'; // QuizLoadItem
+import '../DTO/quiz_result_request.dart'; // 🔹 QuizResultItem 사용
 import '../info/user_info.dart';
 
 /// ===== 모델 =====
@@ -17,7 +17,7 @@ class Choice {
 }
 
 class Question {
-  final int quizId;            // 🔹 서버의 quizId
+  final int quizId; // 🔹 서버의 quizId
   final String title;
   final List<Choice> choices;
 
@@ -37,8 +37,8 @@ class QuizController {
   final List<Question> questions;
 
   int index = 0;
-  int? selected;        // 화면에 현재 보이는 선택
-  int? firstSelected;   // ✅ 채점에 쓰일 '처음 선택'
+  int? selected; // 화면에 현재 보이는 선택
+  int? firstSelected; // ✅ 채점에 쓰일 '처음 선택'
   int correctCount = 0;
   QuizStage stage = QuizStage.question;
 
@@ -66,9 +66,9 @@ class QuizController {
     if (stage == QuizStage.question) {
       stage = QuizStage.feedback;
     }
-    selected ??= i;        // 화면 첫 선택 기록
-    firstSelected ??= i;   // 채점용 첫 선택 기록(이미 있으면 유지)
-    selected = i;          // 화면용 현재 선택은 언제든 변경 가능
+    selected ??= i; // 화면 첫 선택 기록
+    firstSelected ??= i; // 채점용 첫 선택 기록(이미 있으면 유지)
+    selected = i; // 화면용 현재 선택은 언제든 변경 가능
   }
 
   /// ✅ 다음 문제로 진행(채점은 '처음 선택' 기준)
@@ -239,7 +239,8 @@ class _QuizScreenState extends State<QuizScreen> {
     }
 
     // 여기부터는 c가 준비된 상태
-    final double filledWidth = 300 * c.progress;
+    const double totalBarWidth = 300;
+    final double filledWidth = totalBarWidth * c.progress;
     final bool nextEnabled =
         c.stage == QuizStage.feedback && c.hasSelection;
 
@@ -252,11 +253,11 @@ class _QuizScreenState extends State<QuizScreen> {
             height: 812,
             clipBehavior: Clip.antiAlias,
             decoration: const BoxDecoration(color: Color(0xFFEDE8E3)),
-            child: Stack(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Positioned(
-                  left: 143,
-                  top: 56,
+                const SizedBox(height: 40),
+                const Center(
                   child: Text(
                     '오늘의 퀴즈',
                     style: TextStyle(
@@ -267,135 +268,166 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
 
-                // 진행바
-                Positioned(
-                  left: 20,
-                  top: 104,
-                  child: Container(
-                    width: 300,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF4F3F6),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 20,
-                  top: 104,
-                  child: Container(
-                    width: filledWidth.clamp(0, 300),
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4E7C88),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 332,
-                  top: 100,
-                  child: Text(
-                    '${c.index + 1}/${c.total}',
-                    style: const TextStyle(
-                      color: Color(0xFF757575),
-                      fontSize: 14,
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-
-                // 문제
-                Positioned(
-                  left: 20,
-                  top: 160,
-                  child: SizedBox(
-                    width: 335,
-                    child: Text(
-                      c.q.title,
-                      style: const TextStyle(
-                        color: Color(0xFF2C2C2C),
-                        fontSize: 17,
-                        fontFamily: 'Roboto',
-                        fontWeight: FontWeight.w600,
-                        height: 1.76,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // 피드백 패널
-                if (c.stage == QuizStage.feedback &&
-                    c.selectedChoice != null)
-                  Positioned(
-                    left: 22,
-                    top: 243,
-                    child: SizedBox(
-                      width: 333,
-                      height: 200,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: c.isCorrectNow
-                              ? const Color(0xFF6D9E8D)
-                              : const Color(0xFFCC8275),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Image.asset(
-                              'assets/images/tiger_image.png',
-                              width: 60,
-                              height: 120,
-                              fit: BoxFit.contain,
+                // 진행바 + 인덱스
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Stack(
+                        children: [
+                          Container(
+                            width: totalBarWidth,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF4F3F6),
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                child: Text(
-                                  c.selectedChoice!.explanation,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontFamily: 'Roboto',
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.54,
+                          ),
+                          Container(
+                            width: filledWidth.clamp(0, totalBarWidth),
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF4E7C88),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${c.index + 1}/${c.total}',
+                        style: const TextStyle(
+                          color: Color(0xFF757575),
+                          fontSize: 14,
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // 내용 전체 영역 (문제 + 해설 + 선지)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: IntrinsicHeight(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // 문제
+                                  Text(
+                                    c.q.title,
+                                    style: const TextStyle(
+                                      color: Color(0xFF2C2C2C),
+                                      fontSize: 17,
+                                      fontFamily: 'Roboto',
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.5,
+                                    ),
                                   ),
-                                  softWrap: true,
-                                ),
+
+                                  const SizedBox(height: 16),
+
+                                  // 피드백 패널
+                                  if (c.stage == QuizStage.feedback &&
+                                      c.selectedChoice != null)
+                                    Container(
+                                      constraints: const BoxConstraints(
+                                        minHeight: 120,
+                                        maxHeight:
+                                        160, // 이전보다 조금 줄여서 공간 확보
+                                      ),
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: c.isCorrectNow
+                                            ? const Color(0xFF6D9E8D)
+                                            : const Color(0xFFCC8275),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                        children: [
+                                          Image.asset(
+                                            'assets/images/tiger_image.png',
+                                            width: 60,
+                                            height: 120,
+                                            fit: BoxFit.contain,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: SingleChildScrollView(
+                                              child: Text(
+                                                c.selectedChoice!.explanation,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 13,
+                                                  fontFamily: 'Roboto',
+                                                  fontWeight: FontWeight.w600,
+                                                  height: 1.54,
+                                                ),
+                                                softWrap: true,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                  const SizedBox(height: 24),
+
+                                  // 🔹 남는 공간은 비워두고 선지를 아래로 밀기
+                                  const Spacer(),
+
+                                  // 선지들 (아래쪽에 붙음)
+                                  Column(
+                                    children: List.generate(
+                                      c.q.choices.length,
+                                          (i) => Padding(
+                                        padding:
+                                        const EdgeInsets.only(bottom: 12),
+                                        child: _OptionTile(
+                                          letter:
+                                          String.fromCharCode(65 + i),
+                                          text: c.q.choices[i].text,
+                                          color: _optionBg(i),
+                                          isSelected: c.selected == i,
+                                          onTap: () => _onTapChoice(i),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-
-                // 보기들
-                for (int i = 0; i < c.q.choices.length; i++)
-                  Positioned(
-                    left: 20,
-                    top: 450 + (i * 60),
-                    child: _OptionTile(
-                      letter: String.fromCharCode(65 + i),
-                      text: c.q.choices[i].text,
-                      color: _optionBg(i),
-                      isSelected: c.selected == i,
-                      onTap: () => _onTapChoice(i),
-                    ),
-                  ),
+                ),
 
                 // 하단 버튼
-                Positioned(
-                  left: 20,
-                  top: 694,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                   child: GestureDetector(
                     onTap: nextEnabled ? _onTapNext : null,
                     child: Container(
-                      width: 335,
+                      width: double.infinity,
                       height: 60,
                       decoration: BoxDecoration(
                         color: nextEnabled
@@ -449,56 +481,50 @@ class _OptionTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 335,
-        height: 52,
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Stack(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Positioned(
-              left: 16,
-              top: 10,
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEDE8E3),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: isSelected
-                    ? const Icon(
-                  Icons.check,
-                  size: 18,
-                  color: Color(0xFF4E7C88),
-                )
-                    : Text(
-                  letter,
-                  style: const TextStyle(
-                    color: Color(0xFF060710),
-                    fontSize: 15,
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w600,
-                  ),
+            const SizedBox(width: 16),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEDE8E3),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: isSelected
+                  ? const Icon(
+                Icons.check,
+                size: 18,
+                color: Color(0xFF4E7C88),
+              )
+                  : Text(
+                letter,
+                style: const TextStyle(
+                  color: Color(0xFF060710),
+                  fontSize: 15,
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            Positioned(
-              left: 70,
-              top: 16,
-              child: SizedBox(
-                width: 250,
-                child: Text(
-                  text,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF2C2C2C),
-                    fontSize: 15,
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w600,
-                  ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                softWrap: true,
+                style: const TextStyle(
+                  color: Color(0xFF2C2C2C),
+                  fontSize: 15,
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w600,
+                  height: 1.3,
                 ),
               ),
             ),
