@@ -83,7 +83,9 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
       // 🔸 completionRatio 계산 (예시로, 유저 목표 questionCount 기준)
       final user = UserInfo.currentUser;
       double completion = 0.0;
-      if (user != null && user.questionCount != null && user.questionCount > 0) {
+      if (user != null &&
+          user.questionCount != null &&
+          user.questionCount > 0) {
         completion = totalCount / user.questionCount;
       }
 
@@ -106,7 +108,6 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
     // 통계 로딩 중이어도 기본 UI는 보여주고 숫자만 나중에 갱신되게 놔두는 쪽으로 갈게
     return Scaffold(
       backgroundColor: const Color(0xFFEDE8E3),
-
       body: SafeArea(
         child: Stack(
           children: [
@@ -116,13 +117,20 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
                 MainTabBody(
                   name: _name,
                   tier: _tier,
-                  weeklyData: weeklyData,    // ✅ 메인 탭 차트도 API 데이터 사용
+                  weeklyData: weeklyData, // ✅ 메인 탭 차트도 API 데이터 사용
                   onTodayQuizTap: () => context.go(R.quiz),
+
+                  // 🔥 추가: 메인 화면의 학습 현황 차트 카드 탭 시 → 학습현황 탭으로 이동
+                  onLearningStatusTap: () {
+                    setState(() {
+                      _currentIndex = 2; // 0: 메인, 1: 정보, 2: 학습 현황, 3: 설정
+                    });
+                  },
                 ),
                 const InfoTabBody(),
                 LearningStatusTabBody(
-                  weeklyData: weeklyData,    // ✅ 학습현황 차트도 동일 데이터 사용
-                  tierName: _tier,           // ✅ user_info에서 가져온 티어
+                  weeklyData: weeklyData, // ✅ 학습현황 차트도 동일 데이터 사용
+                  tierName: _tier, // ✅ user_info에서 가져온 티어
                   totalQuizCount: _totalQuizCount,
                   completionRatio: _completionRatio,
                 ),
@@ -138,15 +146,16 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
                 bottom: 80,
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.red.withOpacity(0.9),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
                       _statsError!,
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style:
+                      const TextStyle(color: Colors.white, fontSize: 12),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -184,17 +193,15 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
               label: '정보 모음',
             ),
             BottomNavigationBarItem(
-              icon: _PillIcon(
-                  icon: Icons.bar_chart_rounded, active: false),
-              activeIcon: _PillIcon(
-                  icon: Icons.bar_chart_rounded, active: true),
+              icon: _PillIcon(icon: Icons.bar_chart_rounded, active: false),
+              activeIcon:
+              _PillIcon(icon: Icons.bar_chart_rounded, active: true),
               label: '학습 현황',
             ),
             BottomNavigationBarItem(
-              icon: _PillIcon(
-                  icon: Icons.settings_outlined, active: false),
-              activeIcon: _PillIcon(
-                  icon: Icons.settings_outlined, active: true),
+              icon: _PillIcon(icon: Icons.settings_outlined, active: false),
+              activeIcon:
+              _PillIcon(icon: Icons.settings_outlined, active: true),
               label: '설정',
             ),
           ],

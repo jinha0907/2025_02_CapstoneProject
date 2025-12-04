@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:korean_culture_quiz/widgets/weekly_study_chart.dart';
 
-
 class MainTabBody extends StatelessWidget {
   final String name;
   final String tier;
   final List<double> weeklyData;
-  final VoidCallback onTodayQuizTap; // ← 오늘의 퀴즈 탭 콜백
+  final VoidCallback onTodayQuizTap; // 오늘의 퀴즈 탭 콜백
+
+  // 🔥 추가: 메인 화면에서 학습 현황 차트 카드를 탭했을 때 학습현황 탭으로 전환하는 콜백
+  final VoidCallback onLearningStatusTap;
 
   const MainTabBody({
     super.key,
@@ -14,6 +16,7 @@ class MainTabBody extends StatelessWidget {
     required this.tier,
     required this.weeklyData,
     required this.onTodayQuizTap,
+    required this.onLearningStatusTap,
   });
 
   @override
@@ -26,7 +29,8 @@ class MainTabBody extends StatelessWidget {
           // ===== 상단: 환영합니다 =====
           Row(
             children: const [
-              Icon(Icons.wb_sunny_outlined, size: 18, color: Color(0xFF6B6B6B)),
+              Icon(Icons.wb_sunny_outlined,
+                  size: 18, color: Color(0xFF6B6B6B)),
               SizedBox(width: 6),
               Text(
                 '환영합니다!',
@@ -87,9 +91,9 @@ class MainTabBody extends StatelessWidget {
           _ChartCard(
             title: '내 학습 현황',
             child: WeeklyStudyChart(weeklyData: weeklyData),
-            onTap: () {
-              // 나중에 학습 현황 상세 페이지 연결 가능
-            },
+
+            // 🔥 차트 카드 전체를 탭하면 → 학습현황 탭으로 이동
+            onTap: onLearningStatusTap,
             backgroundColor: Colors.white,
           ),
         ],
@@ -117,7 +121,7 @@ class _HeaderSection extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
-                  width: 100,
+                  width: 110,
                   child: Image.asset(
                     'assets/images/tiger_image.png',
                     fit: BoxFit.cover,
@@ -186,7 +190,8 @@ class _InfoCard extends StatelessWidget {
     this.onTap,
     this.showChevron = true,
     this.backgroundColor = const Color(0xFFF6F1EB),
-    this.contentPadding = const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+    this.contentPadding =
+    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
   });
 
   @override
@@ -232,7 +237,8 @@ class _InfoCard extends StatelessWidget {
                 ),
               ),
               if (showChevron)
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF9B9B9B)),
+                const Icon(Icons.chevron_right_rounded,
+                    color: Color(0xFF9B9B9B)),
             ],
           ),
         ),
@@ -279,7 +285,8 @@ class _ChartCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded, color: Color(0xFF9B9B9B)),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: Color(0xFF9B9B9B)),
                 ],
               ),
               const SizedBox(height: 8),
