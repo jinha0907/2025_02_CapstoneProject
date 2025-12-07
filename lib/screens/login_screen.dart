@@ -162,6 +162,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 16),
+
+              GestureDetector(
+                onTap: () {
+                  context.go(R.signup); // 회원가입 화면으로 이동
+                },
+                child: const Text(
+                  '회원가입',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
             ],
           ),
         ),

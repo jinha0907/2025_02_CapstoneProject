@@ -1,3 +1,4 @@
+// lib/router.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,10 +8,10 @@ import 'screens/signup_screen.dart';
 import 'screens/quiz_screen.dart';
 import 'screens/quiz_result_screen.dart';
 
-
 // 메인 탭
 import 'screens/main_screen/main_tab_scaffold.dart';
-import '../DTO/quiz_result_request.dart'; // ㅅ'
+import 'DTO/quiz_result_request.dart'; // 경로 lib 기준
+
 // 설정 내부
 import 'screens/main_screen/settings/difficulty_setting_screen.dart';
 import 'screens/main_screen/settings/amount_setting_screen.dart';
@@ -33,63 +34,66 @@ class R {
   static const amountSetting = '/settings/amount';
 }
 
-final GoRouter appRouter = GoRouter(
-  initialLocation: R.signup,
-  routes: [
-    GoRoute(
-      path: R.login,
-      builder: (_, __) => const LoginScreen(),
-    ),
-    GoRoute(
-      path: R.signup,
-      builder: (_, __) => const SignupScreen(),
-    ),
+// ✅ main.dart에서 hasOnboarded를 받아서 initialLocation만 분기
+GoRouter createRouter({required bool hasOnboarded}) {
+  return GoRouter(
+    // 🔥 첫 실행이면 signup, 그 이후에는 login부터
+    initialLocation: hasOnboarded ? R.login : R.signup,
+    routes: [
+      GoRoute(
+        path: R.login,
+        builder: (_, __) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: R.signup,
+        builder: (_, __) => const SignupScreen(),
+      ),
 
-    // 메인 탭 (0번 탭 = 메인)
-    GoRoute(
-      path: R.main,
-      builder: (_, __) => const MainTabScaffold(),
-    ),
+      // 메인 탭 (0번 탭 = 메인)
+      GoRoute(
+        path: R.main,
+        builder: (_, __) => const MainTabScaffold(),
+      ),
 
-    // 설정 탭으로 바로 들어가고 싶을 때 (필요 없으면 나중에 삭제해도 됨)
-    GoRoute(
-      path: R.settings,
-      builder: (_, __) => const MainTabScaffold(), // 탭 인덱스는 나중에 initialIndex로 확장 가능
-    ),
+      // 설정 탭으로 바로 들어가고 싶을 때
+      GoRoute(
+        path: R.settings,
+        builder: (_, __) => const MainTabScaffold(),
+      ),
 
-    GoRoute(
-      path: R.quiz,
-      builder: (_, __) => const QuizScreen(),
-    ),
-    GoRoute(
-      path: R.quizResult,
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        final total = extra?['total'] as int? ?? 2;
-        final correct = extra?['correct'] as int? ?? 1;
-        final results =
-            (extra?['results'] as List<QuizResultItem>?) ?? const [];
+      GoRoute(
+        path: R.quiz,
+        builder: (_, __) => const QuizScreen(),
+      ),
+      GoRoute(
+        path: R.quizResult,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
 
-        return QuizResultScreen(
-          total: total,
-          correct: correct,
-          results: results,
-        );
-      },
-    ),
+          final total = extra?['total'] as int? ?? 2;
+          final correct = extra?['correct'] as int? ?? 1;
+          final results =
+              (extra?['results'] as List<QuizResultItem>?) ?? const [];
 
+          return QuizResultScreen(
+            total: total,
+            correct: correct,
+            results: results,
+          );
+        },
+      ),
 
+      // 🔹 난이도 설정
+      GoRoute(
+        path: R.difficulty,
+        builder: (_, __) => const DifficultySettingScreen(),
+      ),
 
-    // 🔹 난이도 설정
-    GoRoute(
-      path: R.difficulty,
-      builder: (_, __) => const DifficultySettingScreen(),
-    ),
-
-    // 🔹 학습량 설정
-    GoRoute(
-      path: R.amountSetting,
-      builder: (_, __) => const AmountSettingScreen(),
-    ),
-  ],
-);
+      // 🔹 학습량 설정
+      GoRoute(
+        path: R.amountSetting,
+        builder: (_, __) => const AmountSettingScreen(),
+      ),
+    ],
+  );
+}
