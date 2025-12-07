@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../router.dart';  // ← lib/router.dart 경로 (settings 폴더 기준)
-
-// 이 파일에서는 실제 화면 위젯(DifficultySettingScreen, AmountSettingScreen)을
-// 직접 push 하지 않고, 라우팅(R.difficulty / R.amountSetting)만 사용하므로
-// 아래 두 import는 더 이상 필요 없음 (원하면 지워도 됨).
-// import 'settings/difficulty_setting_screen.dart';
-// import 'settings/amount_setting_screen.dart';
+import '../../info/user_info.dart'; // 🔥 로그아웃 시 세션 초기화용
 
 class SettingsTabBody extends StatelessWidget {
   const SettingsTabBody({super.key});
@@ -85,8 +80,6 @@ class SettingsTabBody extends StatelessWidget {
               description: '쉬움 / 보통 / 어려움 중에서 선택해요.',
               icon: Icons.school_outlined,
               onTap: () {
-                // ✅ 이전: Navigator.of(context).push(MaterialPageRoute(...))
-                // ✅ 지금: go_router 라우팅
                 context.push(R.difficulty);
               },
             ),
@@ -99,6 +92,34 @@ class SettingsTabBody extends StatelessWidget {
                 context.push(R.amountSetting);
               },
             ),
+
+            // 🔽🔽🔽 여기부터 로그아웃 버튼 추가 🔽🔽🔽
+            const SizedBox(height: 24),
+
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  // 세션 정보 초기화
+                  UserInfo.clear();
+                  // 로그인 화면으로 이동
+                  context.go(R.login);
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: _primaryColor),
+                  foregroundColor: _primaryColor,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text(
+                  '로그아웃',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            // 🔼🔼🔼 로그아웃 버튼 끝 🔼🔼🔼
           ],
         ),
       ),
