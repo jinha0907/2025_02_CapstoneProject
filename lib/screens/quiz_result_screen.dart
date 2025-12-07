@@ -10,7 +10,7 @@ import '../router.dart';
 class QuizResultScreen extends StatefulWidget {
   final int total;
   final int correct;
-  final List<QuizResultItem> results; // 🔹 추가
+  final List<QuizResultItem> results; // 🔹 문제별 결과 리스트
 
   const QuizResultScreen({
     super.key,
@@ -24,10 +24,33 @@ class QuizResultScreen extends StatefulWidget {
 }
 
 class _QuizResultScreenState extends State<QuizResultScreen> {
+  // 🔹 난이도별 "문제당 EXP" 상수
+  static const int _expPerQuestionEasy = 10;
+  static const int _expPerQuestionNormal = 20;
+  static const int _expPerQuestionHard = 30;
+
   @override
   void initState() {
     super.initState();
     _submitResult();
+  }
+
+  /// 🔹 난이도(EASY/NORMAL/HARD)에 따른 "문제당" EXP
+  int _expPerQuestionByDifficulty(String? difficulty) {
+    if (difficulty == null) {
+      return _expPerQuestionEasy; // 기본값
+    }
+
+    switch (difficulty.toUpperCase()) {
+      case 'EASY':
+        return _expPerQuestionEasy;
+      case 'NORMAL':
+        return _expPerQuestionNormal;
+      case 'HARD':
+        return _expPerQuestionHard;
+      default:
+        return _expPerQuestionEasy;
+    }
   }
 
   Future<void> _submitResult() async {
@@ -35,23 +58,41 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
     if (user == null) return;
 
     try {
+      // ✅ 실제 맞춘 문제 수 계산
+      //  - widget.results 에서 correct == true 인 것만 세기
+      //  - 혹시 results가 비어 있으면 fallback 으로 widget.correct 사용
+      int correctCount;
+      if (widget.results.isNotEmpty) {
+        correctCount =
+            widget.results.where((r) => r.correct).length;
+      } else {
+        correctCount = widget.correct;
+      }
+
+      // ✅ 난이도에 따른 문제당 EXP
+      final int expPerQuestion =
+      _expPerQuestionByDifficulty(user.difficulty);
+
+      // ✅ 최종 획득 EXP = 맞춘 문제 수 × 문제당 EXP
+      final int earnedExp = correctCount * expPerQuestion;
+
       final request = QuizResultRequest(
         userId: user.userId,
-        results: widget.results,     // 🔹 문제별 결과
+        results: widget.results,
         totalCount: widget.total,
-        score: widget.correct,       // 맞춘 문제 수 = 점수
-        earnedExp: 10,               // 정책에 맞게 조정 가능
+        score: correctCount, // 점수도 맞춘 개수 기반으로 통일
+        earnedExp: earnedExp,
       );
 
       final response = await QuizApi.submitQuizResult(request);
 
-      // UserInfo 업데이트
+      // UserInfo 업데이트 (서버에서 계산된 최종 totalExp, tier 반영)
       final updatedUser = UserResponse(
         userId: user.userId,
         email: user.email,
         nickname: user.nickname,
-        tier: response.currentTier,      // Tier 업데이트
-        totalExp: response.totalExp,     // Exp 업데이트
+        tier: response.currentTier,
+        totalExp: response.totalExp,
         difficulty: user.difficulty,
         questionCount: user.questionCount,
       );
