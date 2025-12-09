@@ -360,62 +360,57 @@ class _InfoTabBodyState extends State<InfoTabBody> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 24),
+            const SizedBox(height: 4),
 
-            // ===== 상단 호랑이 + 말풍선 카드 =====
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 80,
-                    height:120,
-                    child: Image.asset(
-                      'assets/images/tiger_image.png',
-                      fit: BoxFit.contain,
+            // ===== 상단 호랑이 + 말풍선 카드 (설정 탭과 동일 스타일) =====
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 호랑이를 살짝 왼쪽으로 당겨서 PNG 안쪽 여백 보정
+                Transform.translate(
+                  offset: const Offset(-6, 0),
+                  child: Image.asset(
+                    'assets/images/tiger_image.png',
+                    width: 100,
+                    height: 160,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white, // 설정 탭과 동일
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          _rootTitle,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF2C2C2C),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _rootSubtitle,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF4A4A4A),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF4F3F6),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            _rootTitle,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFF2C2C2C),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _rootSubtitle,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFF858494),
-                              fontSize: 14,
-                              height: 1.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 40),
@@ -424,8 +419,9 @@ class _InfoTabBodyState extends State<InfoTabBody> {
             GestureDetector(
               onTap: () => _selectKind(InfoKind.culture),
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 10),   // ⬅ 좌우 10px
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(16),
@@ -438,14 +434,14 @@ class _InfoTabBodyState extends State<InfoTabBody> {
                   ],
                 ),
                 child: Row(
-                  children: [
-                    const Icon(
-                      Icons.lightbulb_outline,  // ⬅ 전구 아이콘
+                  children: const [
+                    Icon(
+                      Icons.lightbulb_outline,
                       size: 28,
                       color: Color(0xFF4E7C88),
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
+                    SizedBox(width: 12),
+                    Expanded(
                       child: Text(
                         '퀴즈 정보 모음',
                         style: TextStyle(
@@ -455,7 +451,6 @@ class _InfoTabBodyState extends State<InfoTabBody> {
                         ),
                       ),
                     ),
-                    // ⛔ 오른쪽 화살표 제거 (아무것도 넣지 않음)
                   ],
                 ),
               ),
@@ -463,12 +458,13 @@ class _InfoTabBodyState extends State<InfoTabBody> {
 
             const SizedBox(height: 20),
 
-// ===== "생활 정보 모음" 카드 =====
+            // ===== "생활 정보 모음" 카드 =====
             GestureDetector(
               onTap: () => _selectKind(InfoKind.life),
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 10),   // ⬅ 좌우 10px
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(16),
@@ -481,14 +477,14 @@ class _InfoTabBodyState extends State<InfoTabBody> {
                   ],
                 ),
                 child: Row(
-                  children: [
-                    const Icon(
-                      Icons.lightbulb_outline,  // ⬅ 전구 아이콘
+                  children: const [
+                    Icon(
+                      Icons.lightbulb_outline,
                       size: 28,
                       color: Color(0xFF4E7C88),
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
+                    SizedBox(width: 12),
+                    Expanded(
                       child: Text(
                         '생활 정보 모음',
                         style: TextStyle(
@@ -498,12 +494,10 @@ class _InfoTabBodyState extends State<InfoTabBody> {
                         ),
                       ),
                     ),
-                    // ⛔ 오른쪽 화살표 제거
                   ],
                 ),
               ),
             ),
-
 
             const SizedBox(height: 32),
           ],
@@ -591,6 +585,7 @@ class _InfoTabBodyState extends State<InfoTabBody> {
     return Container(
       color: const Color(0xFFEDE8E3),
       child: Padding(
+        // ✅ 설정 탭과 동일한 패딩
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: _buildBody(),
       ),

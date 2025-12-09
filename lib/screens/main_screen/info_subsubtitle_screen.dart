@@ -101,7 +101,7 @@ class _TigerHeader extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF4F3F6),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(

@@ -14,8 +14,7 @@ class SettingsTabBody extends StatelessWidget {
     return Container(
       color: const Color(0xFFEDE8E3),
       child: Padding(
-        // 왼쪽 패딩을 16 -> 8 로 줄여서 전체적으로 더 붙게
-        padding: const EdgeInsets.fromLTRB(8, 8, 16, 16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -24,9 +23,8 @@ class SettingsTabBody extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // 호랑이를 살짝 왼쪽으로 당겨서 PNG 안쪽 여백(13px)을 보정
                 Transform.translate(
-                  offset: const Offset(-6, 0), // 왼쪽으로 6px 이동
+                  offset: const Offset(-6, 0),
                   child: Image.asset(
                     'assets/images/tiger_image.png',
                     width: 100,
@@ -34,8 +32,6 @@ class SettingsTabBody extends StatelessWidget {
                     fit: BoxFit.contain,
                   ),
                 ),
-
-                // 호랑이와 카드 사이 여백도 16 -> 6 정도로 축소
                 const SizedBox(width: 6),
 
                 Expanded(
@@ -84,6 +80,7 @@ class SettingsTabBody extends StatelessWidget {
               },
             ),
             const SizedBox(height: 12),
+
             _MenuCard(
               label: '하루 퀴즈 분량 설정',
               description: '하루에 풀 문제 개수를 정해요.',
@@ -93,21 +90,19 @@ class SettingsTabBody extends StatelessWidget {
               },
             ),
 
-            // 🔽🔽🔽 여기부터 로그아웃 버튼 추가 🔽🔽🔽
             const SizedBox(height: 24),
 
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: () {
-                  // 세션 정보 초기화
                   UserInfo.clear();
-                  // 로그인 화면으로 이동
                   context.go(R.login);
                 },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: _primaryColor),
-                  foregroundColor: _primaryColor,
+                  side: const BorderSide(color: SettingsTabBody._primaryColor),  // 테두리 = 글자색
+                  backgroundColor: SettingsTabBody._primaryColor,                // 내부 = 글자색
+                  foregroundColor: Colors.white,                                 // 글씨 = 흰색
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 child: const Text(
@@ -115,11 +110,11 @@ class SettingsTabBody extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: Colors.white,  // 글씨 흰색
                   ),
                 ),
               ),
             ),
-            // 🔼🔼🔼 로그아웃 버튼 끝 🔼🔼🔼
           ],
         ),
       ),
@@ -147,54 +142,50 @@ class _MenuCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: Ink(
+        child: Container(
           decoration: BoxDecoration(
-            color: SettingsTabBody._cardColor,
+            color: Colors.white, // 내부 흰색
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: const Color(0xFFB0A696),
-              width: 1,
-            ),
+            // 🔥 테두리 제거 — 기존 Border.all 삭제
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            child: Row(
-              children: [
-                Icon(icon, size: 26, color: const Color(0xFF2C2C2C)),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF2C2C2C),
-                        ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, size: 26, color: const Color(0xFF2C2C2C)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2C2C2C),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        description,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF4A4A4A),
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF4A4A4A),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Color(0xFF4A4A4A),
-                ),
-              ],
-            ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF4A4A4A),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
+

@@ -1,3 +1,4 @@
+// lib/DTO/quiz_load.dart
 import 'dart:convert';
 
 class QuizHeader {
@@ -32,9 +33,9 @@ class QuizLoadItem {
   final int detailId;
   final QuizHeader quizHeader;
   final String question;
-  final List<String> choices;       // 파싱된 보기 리스트
+  final List<String> choices;   // 파싱된 보기 리스트
   final String answer;
-  final List<String> explanations;  // 보기별 설명 리스트
+  final String explanation;     // ✅ 이제 단일 문자열 설명
 
   QuizLoadItem({
     required this.detailId,
@@ -42,19 +43,14 @@ class QuizLoadItem {
     required this.question,
     required this.choices,
     required this.answer,
-    required this.explanations,
+    required this.explanation,
   });
 
   factory QuizLoadItem.fromJson(Map<String, dynamic> json) {
-    // ✅ 실제 응답: choices / explanation 이 "JSON 배열 문자열" 로 옴
+    // ✅ 응답에서 choices 는 여전히 "JSON 배열 문자열"
     final rawChoices = json['choices'] as String;
-    final rawExplanation = json['explanation'] as String;
 
     final decodedChoices = (jsonDecode(rawChoices) as List)
-        .map((e) => e.toString())
-        .toList();
-
-    final decodedExplanations = (jsonDecode(rawExplanation) as List)
         .map((e) => e.toString())
         .toList();
 
@@ -66,7 +62,7 @@ class QuizLoadItem {
       question: json['question'] as String,
       choices: decodedChoices,
       answer: json['answer'] as String,
-      explanations: decodedExplanations,
+      explanation: json['explanation'] as String, // ✅ 그대로 문자열 사용
     );
   }
 
@@ -78,7 +74,8 @@ class QuizLoadItem {
       // 서버 포맷에 맞추려면 다시 문자열로 인코딩
       'choices': jsonEncode(choices),
       'answer': answer,
-      'explanation': jsonEncode(explanations),
+      // ✅ explanation 은 이제 단일 문자열
+      'explanation': explanation,
     };
   }
 }

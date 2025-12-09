@@ -142,20 +142,20 @@ class _QuizScreenState extends State<QuizScreen> {
       // 🔁 QuizLoadItem -> Question/Choice 변환
       final questions = items.map((item) {
         final List<String> choices = item.choices;
-        final List<String> explanations = item.explanations;
+        final String explanation = item.explanation; // ✅ 단일 설명 문자열
 
         final choiceModels = <Choice>[];
 
         for (int i = 0; i < choices.length; i++) {
           final text = choices[i];
-          final explain = (i < explanations.length) ? explanations[i] : '';
 
           final isAnswer = text == item.answer;
 
           choiceModels.add(
             Choice(
               text,
-              explanation: explain,
+              // ✅ 현재 구조에서는 선택지와 상관없이 같은 해설을 보여줌
+              explanation: explanation,
               isAnswer: isAnswer,
             ),
           );
@@ -346,8 +346,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                     Container(
                                       constraints: const BoxConstraints(
                                         minHeight: 120,
-                                        maxHeight:
-                                        160, // 이전보다 조금 줄여서 공간 확보
+                                        maxHeight: 160,
                                       ),
                                       width: double.infinity,
                                       padding: const EdgeInsets.all(12),
@@ -389,7 +388,6 @@ class _QuizScreenState extends State<QuizScreen> {
 
                                   const SizedBox(height: 24),
 
-                                  // 🔹 남는 공간은 비워두고 선지를 아래로 밀기
                                   const Spacer(),
 
                                   // 선지들 (아래쪽에 붙음)
