@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:korean_culture_quiz/widgets/weekly_study_chart.dart';
+import 'package:korean_culture_quiz/DTO/quiz_stats.dart';
 
 class MainTabBody extends StatelessWidget {
   final String name;
   final String tier;
-  final List<double> weeklyData;
+  final List<WeeklyQuizCount> weeklyData;
   final VoidCallback onTodayQuizTap; // 오늘의 퀴즈 탭 콜백
 
   // 🔥 추가: 메인 화면에서 학습 현황 차트 카드를 탭했을 때 학습현황 탭으로 전환하는 콜백

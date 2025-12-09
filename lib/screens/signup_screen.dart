@@ -590,21 +590,21 @@ class _DifficultyStep extends StatelessWidget {
 
           const SizedBox(height: 40),
           _ChoiceButton(
-            title: '쉬운 난이도: 기본 상식과 쉬운 퀴즈',
+            title: 'easy: 한국 사회 초입이라면 이 단계부터 가볍게 시작해요!',
             subtitle: '',
             selected: selected == Difficulty.easy,
             onTap: () => onSelect(Difficulty.easy),
           ),
           const SizedBox(height: 19),
           _ChoiceButton(
-            title: '중간 난이도: 기본 상식과 중간 수준의 퀴즈',
+            title: 'normal: 어느 정도 익숙하면 이 난이도가 잘 맞아요!',
             subtitle: '',
             selected: selected == Difficulty.normal,
             onTap: () => onSelect(Difficulty.normal),
           ),
           const SizedBox(height: 19),
           _ChoiceButton(
-            title: '어려운 난이도: 어려운 수준의 상식 퀴즈',
+            title: 'hard: 한국 사회를 꽤 잘 알아야 풀 수 있어요!',
             subtitle: '',
             selected: selected == Difficulty.hard,
             onTap: () => onSelect(Difficulty.hard),

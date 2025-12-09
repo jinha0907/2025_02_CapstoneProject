@@ -27,7 +27,6 @@ class QuizApi {
     }
   }
 
-
   // ================================================================
   // 2) 퀴즈 결과 전송
   // ================================================================
@@ -46,7 +45,6 @@ class QuizApi {
       throw Exception('퀴즈 결과 저장 실패: ${response.statusCode}');
     }
   }
-
 
   // ================================================================
   // ⭐ 3) 주간 퀴즈 풀이 수 (차트용)
@@ -67,15 +65,20 @@ class QuizApi {
     if (response.statusCode == 200) {
       final List<dynamic> raw = response.data as List<dynamic>;
 
-      return raw
+      final list = raw
           .map((e) => WeeklyQuizCount.fromJson(e as Map<String, dynamic>))
           .toList();
+
+      // 🔹 날짜 기준으로 정렬 (오래된 날짜 → 최근 날짜)
+      //    "2025-12-03" 같은 ISO 포맷이면 문자열 비교로도 정렬 잘 됨
+      list.sort((a, b) => a.date.compareTo(b.date));
+
+      return list;
     } else {
       throw Exception(
           '주간 학습량 로드 실패: ${response.statusCode}, ${response.data}');
     }
   }
-
 
   // ================================================================
   // ⭐ 4) 전체 푼 퀴즈 개수

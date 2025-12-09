@@ -25,8 +25,8 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
   String _name = '';
   String _tier = '';
 
-  /// 주간 학습량(월~일)
-  List<double> weeklyData = List.filled(7, 0.0);
+  /// 주간 학습량(월~일) - 🔥 이제 DTO 리스트로 관리
+  List<WeeklyQuizCount> weeklyData = const [];
 
   /// 전체 푼 퀴즈 개수
   int _totalQuizCount = 0;
@@ -74,23 +74,28 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
       results[0] as List<WeeklyQuizCount>;
       final int totalCount = results[1] as int;
 
-      // 주간 데이터 -> List<double> 변환 (월~일 7개)
-      final List<double> newWeeklyData = List.filled(7, 0.0);
-      for (int i = 0; i < weeklyList.length && i < 7; i++) {
-        newWeeklyData[i] = weeklyList[i].count.toDouble();
+      // 🔹 주간 데이터 정렬 (오래된 날짜 → 최신 날짜)
+      final List<WeeklyQuizCount> sortedWeekly = [...weeklyList]
+        ..sort((a, b) => a.date.compareTo(b.date));
+
+      // 🔹 최대 7개만 사용 (데이터가 더 많을 경우, 최근 7일만)
+      List<WeeklyQuizCount> limitedWeekly;
+      if (sortedWeekly.length <= 7) {
+        limitedWeekly = sortedWeekly;
+      } else {
+        limitedWeekly =
+            sortedWeekly.sublist(sortedWeekly.length - 7); // 뒤에서 7개
       }
 
-      // 🔸 completionRatio 계산 (예시로, 유저 목표 questionCount 기준)
+      // 🔹 completionRatio 계산 (유저 목표 questionCount 기준)
       final user = UserInfo.currentUser;
       double completion = 0.0;
-      if (user != null &&
-          user.questionCount != null &&
-          user.questionCount > 0) {
+      if (user != null && user.questionCount > 0) {
         completion = totalCount / user.questionCount;
       }
 
       setState(() {
-        weeklyData = newWeeklyData;
+        weeklyData = limitedWeekly;            // 🔥 DTO 그대로 저장
         _totalQuizCount = totalCount;
         _completionRatio = completion.clamp(0.0, 1.0);
         _loadingStats = false;
@@ -117,10 +122,10 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
                 MainTabBody(
                   name: _name,
                   tier: _tier,
-                  weeklyData: weeklyData, // ✅ 메인 탭 차트도 API 데이터 사용
+                  weeklyData: weeklyData, // ✅ DTO 리스트 전달
                   onTodayQuizTap: () => context.go(R.quiz),
 
-                  // 🔥 추가: 메인 화면의 학습 현황 차트 카드 탭 시 → 학습현황 탭으로 이동
+                  // 🔥 메인 화면의 학습 현황 차트 카드 탭 시 → 학습현황 탭으로 이동
                   onLearningStatusTap: () {
                     setState(() {
                       _currentIndex = 2; // 0: 메인, 1: 정보, 2: 학습 현황, 3: 설정
@@ -129,8 +134,8 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
                 ),
                 const InfoTabBody(),
                 LearningStatusTabBody(
-                  weeklyData: weeklyData, // ✅ 학습현황 차트도 동일 데이터 사용
-                  tierName: _tier, // ✅ user_info에서 가져온 티어
+                  weeklyData: weeklyData,       // ✅ 여기도 타입 맞게 DTO 리스트
+                  tierName: _tier,
                   totalQuizCount: _totalQuizCount,
                   completionRatio: _completionRatio,
                 ),

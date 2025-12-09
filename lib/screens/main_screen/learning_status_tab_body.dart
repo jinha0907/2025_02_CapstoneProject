@@ -1,11 +1,12 @@
 // lib/screens/tabs/learning_status_tab_body.dart
 import 'package:flutter/material.dart';
 import 'package:korean_culture_quiz/widgets/weekly_study_chart.dart';
+import 'package:korean_culture_quiz/DTO/quiz_stats.dart';
 
 import '../../info/user_info.dart'; // 🔥 UserInfo에서 totalExp, tier 읽기
 
 class LearningStatusTabBody extends StatelessWidget {
-  final List<double> weeklyData;
+  final List<WeeklyQuizCount> weeklyData;
   final String tierName;
   final int totalQuizCount;
   final double completionRatio; // 기존 필드(호환용, 없애도 되지만 일단 유지)
