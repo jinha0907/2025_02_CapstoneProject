@@ -599,6 +599,7 @@ class _OptionTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 335,
+        height: 60, // ← 고정 크기
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: color,
@@ -609,7 +610,7 @@ class _OptionTile extends StatelessWidget {
           children: [
             const SizedBox(width: 16),
 
-            // 원형 A/B/C/D
+            // A/B/C/D 원형 표시
             Container(
               width: 32,
               height: 32,
@@ -619,17 +620,12 @@ class _OptionTile extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: isSelected
-                  ? const Icon(
-                Icons.check,
-                size: 18,
-                color: Color(0xFF4E7C88),
-              )
+                  ? const Icon(Icons.check, size: 18, color: Color(0xFF4E7C88))
                   : Text(
                 letter,
                 style: const TextStyle(
                   color: Color(0xFF060710),
                   fontSize: 15,
-                  fontFamily: 'Roboto',
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -637,17 +633,16 @@ class _OptionTile extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            // 🔥 2줄 최대 / 글자 길면 자동 줄바꿈
+            // 🔥 텍스트 자동 크기 조절
             Expanded(
               child: AutoSizeText(
                 text,
-                maxLines: 2,
-                minFontSize: 12,
+                maxLines: 3,
+                minFontSize: 10,
                 maxFontSize: 15,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Color(0xFF2C2C2C),
-                  fontFamily: 'Roboto',
                   fontWeight: FontWeight.w600,
                   height: 1.3,
                 ),
@@ -659,3 +654,5 @@ class _OptionTile extends StatelessWidget {
     );
   }
 }
+
+
