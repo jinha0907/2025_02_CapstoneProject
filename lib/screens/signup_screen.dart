@@ -63,6 +63,21 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
+  // 🔥 공통: 첫 화면으로 되돌리는 함수
+  void _resetToFirstStep(String heroMessage) {
+    setState(() {
+      step = 0;
+      _heroText = heroMessage;
+      _submitError = null; // 하단 빨간 글씨는 숨김
+
+      // 비밀번호 / 선택값 초기화
+      _pwCtrl.clear();
+      _pw2Ctrl.clear();
+      _difficulty = null;
+      _dailyCount = null;
+    });
+  }
+
   void _handleNextStep() {
     _hideToast();
     if (step == 0) {
@@ -101,12 +116,11 @@ class _SignupScreenState extends State<SignupScreen> {
     final password = _pwCtrl.text.trim();
 
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      setState(() => step = 0);
+      _resetToFirstStep('회원가입 정보를 다시 입력해 주세요.');
       return;
     }
     if (_difficulty == null || _dailyCount == null) {
-      _showTopToast('난이도와 학습량을 모두 선택해 주세요.');
-      setState(() => step = 1);
+      _resetToFirstStep('회원가입 정보를 다시 입력해 주세요.');
       return;
     }
 
@@ -126,11 +140,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (!mounted) return;
 
-      // 🔹 일반 실패(null) 처리 (409는 AuthApi에서 throw로 올라옴)
+      // 🔹 일반 실패(null) 처리 → 첫 화면으로 돌리기
       if (user == null) {
-        setState(() {
-          _submitError = '회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.';
-        });
+        _resetToFirstStep(
+          '회원가입 중 오류가 발생했습니다.\n다시 한번 가입을 진행해 주세요.',
+        );
         return;
       }
 
@@ -144,9 +158,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (!mounted) return;
       if (diffRes == null) {
-        setState(() {
-          _submitError = '난이도 설정에 실패했습니다. 잠시 후 다시 시도해 주세요.';
-        });
+        _resetToFirstStep(
+          '회원가입 중 오류가 발생했습니다.\n다시 한번 가입을 진행해 주세요.',
+        );
         return;
       }
 
@@ -157,9 +171,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (!mounted) return;
       if (countRes == null) {
-        setState(() {
-          _submitError = '학습량 설정에 실패했습니다. 잠시 후 다시 시도해 주세요.';
-        });
+        _resetToFirstStep(
+          '회원가입 중 오류가 발생했습니다.\n다시 한번 가입을 진행해 주세요.',
+        );
         return;
       }
 
@@ -170,24 +184,15 @@ class _SignupScreenState extends State<SignupScreen> {
     } catch (e) {
       if (!mounted) return;
 
-      // 🔥 409 Conflict (중복 이메일) 처리
+      // 🔥 409 Conflict (중복 이메일) + 그 외 에러도 전부 첫 화면으로
       if (e.toString().contains('409')) {
-        setState(() {
-          step = 0; // 첫 화면으로 이동
-          _heroText = '중복되는 이메일입니다. 다른 이메일을 입력해 주세요.';
-          _submitError = null; // 하단 에러 메시지는 숨김
-
-          // 비밀번호 / 난이도 / 학습량 초기화
-          _pwCtrl.clear();
-          _pw2Ctrl.clear();
-          _difficulty = null;
-          _dailyCount = null;
-        });
+        _resetToFirstStep(
+          '중복되는 이메일입니다. 다른 이메일을 입력해 주세요.',
+        );
       } else {
-        // 그 외 다른 에러
-        setState(() {
-          _submitError = '회원가입 또는 설정 저장 중 오류가 발생했습니다: $e';
-        });
+        _resetToFirstStep(
+          '회원가입 중 오류가 발생했습니다.\n다시 한번 가입을 진행해 주세요.',
+        );
       }
     } finally {
       if (!mounted) return;
@@ -232,9 +237,14 @@ class _SignupScreenState extends State<SignupScreen> {
                 Expanded(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
-                    child: _buildStep(),
+                    child: Align(
+                      key: ValueKey(step),              // 🔑 step 기준으로 애니메이션
+                      alignment: Alignment.topCenter,   // ✅ 위쪽 고정
+                      child: _buildStep(),
+                    ),
                   ),
                 ),
+
                 if (step < 3)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -297,8 +307,8 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 if (_submitError != null)
                   Padding(
-                    padding: const EdgeInsets.only(
-                        left: 20, right: 20, bottom: 8),
+                    padding:
+                    const EdgeInsets.only(left: 20, right: 20, bottom: 8),
                     child: Text(
                       _submitError!,
                       style: const TextStyle(color: Colors.red, fontSize: 12),
@@ -411,29 +421,53 @@ class _SignupStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Image.asset(
-                'assets/images/tiger_image.png',
-                width: 120,
-                height: 120,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  heroText,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
-                    color: Colors.black,
+          // ===== 호랑이 + 텍스트 박스 (메인 헤더와 통일) =====
+          SizedBox(
+            width: 340,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 110,
+                    height: 140,
+                    child: Image.asset(
+                      'assets/images/tiger_image.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 90,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white, // 🔥 메인 헤더 카드 색과 동일
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        heroText,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF2C2C2C),
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+
           const SizedBox(height: 32),
+
           Form(
             key: formKey,
             child: Column(
@@ -509,27 +543,51 @@ class _DifficultyStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Image.asset(
-                'assets/images/tiger_image.png',
-                width: 120,
-                height: 120,
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Text(
-                  '퀴즈 난이도를 선택해 주세요.',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
+          // 🔥 호랑이 + 텍스트 박스를 1단계와 동일 스타일로
+          SizedBox(
+            width: 340,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 110,
+                    height: 140,
+                    child: Image.asset(
+                      'assets/images/tiger_image.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 90,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '퀴즈 난이도를 선택해 주세요.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF2C2C2C),
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+
           const SizedBox(height: 40),
           _ChoiceButton(
             title: '쉬운 난이도: 기본 상식과 쉬운 퀴즈',
@@ -574,27 +632,55 @@ class _StudyAmountStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Image.asset(
-                'assets/images/tiger_image.png',
-                width: 120,
-                height: 120,
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Text(
-                  '하루에 풀 퀴즈 개수를 선택해 주세요.',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
+          // 🔥 여기서도 동일한 헤더 스타일
+          SizedBox(
+            width: 340,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 110,
+                    height: 140,
+                    child: Image.asset(
+                      'assets/images/tiger_image.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: SizedBox(
+                    height: 90,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.all(Radius.circular(16)),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '하루에 풀 퀴즈 개수를 선택해 주세요.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2C2C2C),
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+
           const SizedBox(height: 40),
           for (final n in const [3, 5, 7, 9]) ...[
             _ChoiceButton(

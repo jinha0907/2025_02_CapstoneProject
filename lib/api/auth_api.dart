@@ -26,15 +26,12 @@ class AuthApi {
       return user;
     } on DioException catch (e) {
       final status = e.response?.statusCode;
-
-      print('회원가입 실패 status: $status');
-
-      // 🔥 이메일 중복 → 명확하게 throw
+      // 🔥 409(중복 이메일)는 예외로 다시 던져서 SignupScreen에서 처리하게 함
       if (status == 409) {
         throw Exception('409');
       }
 
-      // 그 외 에러는 일반 실패 처리
+      print('회원가입 실패(DioException): ${e.response?.data ?? e.message}');
       return null;
     } catch (e) {
       print('회원가입 실패: $e');
