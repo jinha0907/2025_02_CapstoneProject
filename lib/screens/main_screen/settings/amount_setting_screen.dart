@@ -67,14 +67,14 @@ class _AmountSettingScreenState extends State<AmountSettingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 상단 호랑이 + 텍스트
+              // ✅ 상단 호랑이 + 텍스트 (난이도 화면과 완전히 동일한 레이아웃)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Image.asset(
                     'assets/images/tiger_image.png',
-                    width: 120,
-                    height: 120,
+                    width: 110,
+                    height: 150,
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(width: 16),
@@ -84,8 +84,9 @@ class _AmountSettingScreenState extends State<AmountSettingScreen> {
                         '하루 퀴즈 문제 분량을\n설정할게요!',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
+                          height: 1.3,
                         ),
                       ),
                     ),
@@ -145,12 +146,12 @@ class _AmountSettingScreenState extends State<AmountSettingScreen> {
                   child: _isSaving
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                          '확인',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                    '확인',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -160,6 +161,7 @@ class _AmountSettingScreenState extends State<AmountSettingScreen> {
     );
   }
 }
+
 class _AmountOption extends StatelessWidget {
   final String label;
   final int value;
@@ -177,7 +179,7 @@ class _AmountOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSelected = value == groupValue;
     final borderColor =
-        isSelected ? const Color(0xFF4E7C88) : const Color(0xFFB0A69A);
+    isSelected ? const Color(0xFF4E7C88) : const Color(0xFFB0A69A);
     final bgColor = isSelected ? const Color(0xFF4E7C88) : Colors.white;
     final titleColor = isSelected ? Colors.white : Colors.black87;
 

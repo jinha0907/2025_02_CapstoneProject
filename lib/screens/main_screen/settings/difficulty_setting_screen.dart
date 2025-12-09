@@ -21,8 +21,9 @@ class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
   @override
   void initState() {
     super.initState();
-    // 현재 사용자 설정 값을 초기 선택값으로 지정
-    _selectedDifficulty = UserInfo.currentUser?.difficulty;
+    // ✅ 현재 사용자 설정 값을 초기 선택값으로 지정 (대문자/소문자 섞여 와도 처리)
+    final raw = UserInfo.currentUser?.difficulty;
+    _selectedDifficulty = raw?.toLowerCase(); // 'EASY' -> 'easy' 등으로 통일
   }
 
   Future<void> _saveSettings() async {
@@ -35,7 +36,7 @@ class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
     try {
       final response = await SettingsApi.updateDifficulty(
         userId: userId,
-        difficulty: _selectedDifficulty!,
+        difficulty: _selectedDifficulty!, // 'easy' / 'normal' / 'hard' 전송
       );
 
       if (response != null && mounted) {
@@ -71,14 +72,14 @@ class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 상단 호랑이 + 텍스트
+              // ✅ 상단 호랑이 + 텍스트 (앞에서 통일한 버전 유지)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Image.asset(
                     'assets/images/tiger_image.png',
-                    width: 100,
-                    height: 160,
+                    width: 110,
+                    height: 150,
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(width: 16),
@@ -149,12 +150,12 @@ class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
                   child: _isSaving
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                          '확인',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                    '확인',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -182,7 +183,7 @@ class _DifficultyOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSelected = value == groupValue;
     final borderColor =
-        isSelected ? const Color(0xFF4E7C88) : const Color(0xFFB0A69A);
+    isSelected ? const Color(0xFF4E7C88) : const Color(0xFFB0A69A);
     final bgColor = isSelected ? const Color(0xFF4E7C88) : Colors.white;
     final titleColor = isSelected ? Colors.white : Colors.black87;
 
@@ -212,4 +213,3 @@ class _DifficultyOption extends StatelessWidget {
     );
   }
 }
-
