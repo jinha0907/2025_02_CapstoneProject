@@ -1,4 +1,6 @@
 // lib/screens/quiz_screen.dart
+import 'dart:ui'; // 🔹 블러 효과용
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:auto_size_text/auto_size_text.dart';
@@ -16,11 +18,11 @@ class Choice {
 }
 
 class Question {
-  final int quizId;        // 🔹 서버의 quizId
+  final int quizId; // 🔹 서버의 quizId
   final String title;
   final List<Choice> choices;
   final String explanation; // ✅ 정답 설명
-  final String hint;        // ✅ 힌트
+  final String hint; // ✅ 힌트
 
   const Question({
     required this.quizId,
@@ -40,7 +42,7 @@ class QuizController {
   final List<Question> questions;
 
   int index = 0;
-  int? selected;      // 화면에 현재 보이는 선택
+  int? selected; // 화면에 현재 보이는 선택
   int? firstSelected; // ✅ 채점에 쓰일 '처음 선택'
   int correctCount = 0;
   QuizStage stage = QuizStage.question;
@@ -69,9 +71,9 @@ class QuizController {
     if (stage == QuizStage.question) {
       stage = QuizStage.feedback;
     }
-    selected ??= i;      // 화면 첫 선택 기록
+    selected ??= i; // 화면 첫 선택 기록
     firstSelected ??= i; // 채점용 첫 선택 기록(이미 있으면 유지)
-    selected = i;        // 화면용 현재 선택은 언제든 변경 가능
+    selected = i; // 화면용 현재 선택은 언제든 변경 가능
   }
 
   /// ✅ 다음 문제로 진행(채점은 '처음 선택' 기준)
@@ -147,19 +149,12 @@ class _QuizScreenState extends State<QuizScreen> {
       // 🔁 QuizLoadItem -> Question/Choice 변환
       final questions = items.map((item) {
         final List<String> choices = item.choices;
-
         final choiceModels = <Choice>[];
 
         for (int i = 0; i < choices.length; i++) {
           final text = choices[i];
           final isAnswer = text == item.answer;
-
-          choiceModels.add(
-            Choice(
-              text,
-              isAnswer: isAnswer,
-            ),
-          );
+          choiceModels.add(Choice(text, isAnswer: isAnswer));
         }
 
         return Question(
@@ -167,7 +162,7 @@ class _QuizScreenState extends State<QuizScreen> {
           title: item.question,
           choices: choiceModels,
           explanation: item.explanation, // ✅ 정답 설명
-          hint: item.hint,               // ✅ 힌트
+          hint: item.hint, // ✅ 힌트
         );
       }).toList();
 
@@ -228,52 +223,93 @@ class _QuizScreenState extends State<QuizScreen> {
 
   void _toggleHint() {
     if (c.q.hint.isEmpty) return;
-
     setState(() {
-      _showHint = !_showHint;   // ← 다시 누르면 false 로 변경되면서 팝업 닫힘
+      _showHint = !_showHint;
     });
   }
 
-  Widget _buildTigerPanel({
+  /// 🔹 해설 패널: 패널 자체 높이는 가변, 내부 내용만 스크롤
+  Widget _buildExplanationPanel({
     required Color bgColor,
     required String text,
   }) {
-    if (text.isEmpty) {
-      return const SizedBox.shrink();
-    }
     return Container(
-      constraints: const BoxConstraints(
-        minHeight: 120,
-        maxHeight: 160,
-      ),
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/images/tiger_image.png',
+            width: 56,
+            height: 100,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 12),
+          // 🔥 이 영역 안에서만 스크롤
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: Text(
+                    text,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 🔹 힌트 팝업 전용 (큰 패널, 중앙)
+  Widget _buildHintPanel({required String text}) {
+    if (text.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      constraints: const BoxConstraints(
+        minHeight: 220,
+        maxHeight: 340,
+      ),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4E7C88),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Image.asset(
             'assets/images/tiger_image.png',
-            width: 60,
-            height: 120,
+            width: 85,
+            height: 170,
             fit: BoxFit.contain,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: SingleChildScrollView(
               child: Text(
                 text,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 13,
+                  fontSize: 15,
                   fontFamily: 'Roboto',
                   fontWeight: FontWeight.w600,
-                  height: 1.54,
+                  height: 1.6,
                 ),
-                softWrap: true,
               ),
             ),
           ),
@@ -282,20 +318,47 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  /// 문제 아래, 정답 해설이 들어갈 영역 (힌트는 팝업으로만 표시)
-  Widget _buildInfoPanel() {
-    // ✅ 정답을 클릭했을 때만 explanation 표시
-    if (c.stage == QuizStage.feedback &&
-        c.selectedChoice != null &&
-        c.isCorrectNow) {
-      return _buildTigerPanel(
-        bgColor: const Color(0xFF6D9E8D),
-        text: c.q.explanation,
-      );
-    }
+  /// ✅ 질문 아래에 들어가는 해설 영역
+  /// - 질문은 고정(가변 높이, 스크롤 X)
+  /// - 해설은 남는 공간을 사용, 패널 내부만 스크롤
+  Widget _buildMiddleArea() {
+    return Flexible(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 질문 (가변, 스크롤 없음)
+            Text(
+              c.q.title,
+              style: const TextStyle(
+                color: Color(0xFF2C2C2C),
+                fontSize: 17,
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 16),
 
-    // 아무것도 안 보여줌
-    return const SizedBox.shrink();
+            // 해설 패널: 남은 공간만을 사용, 내부 스크롤
+            Expanded(
+              child: (c.stage == QuizStage.feedback &&
+                  c.selectedChoice != null &&
+                  c.isCorrectNow)
+                  ? _buildExplanationPanel(
+                bgColor: const Color(0xFF6D9E8D),
+                text: c.q.explanation,
+              )
+                  : const SizedBox.shrink(),
+            ),
+
+            // 🔹 해설과 선지 사이 12 고정
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -341,7 +404,8 @@ class _QuizScreenState extends State<QuizScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 40),
-                    // 상단 제목 + 힌트 아이콘 (아이콘을 오른쪽 끝에)
+
+                    // 상단 제목 + 힌트 아이콘
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Row(
@@ -367,6 +431,7 @@ class _QuizScreenState extends State<QuizScreen> {
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 12),
 
                     // 진행바 + 인덱스
@@ -410,37 +475,10 @@ class _QuizScreenState extends State<QuizScreen> {
 
                     const SizedBox(height: 20),
 
-                    // 🔹 문제 + 정답 해설 영역 (위쪽만 스크롤)
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 문제
-                            Text(
-                              c.q.title,
-                              style: const TextStyle(
-                                color: Color(0xFF2C2C2C),
-                                fontSize: 17,
-                                fontFamily: 'Roboto',
-                                fontWeight: FontWeight.w600,
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
+                    // 🔹 질문 + 해설 (중앙, 가변 / 내부 스크롤만 허용)
+                    _buildMiddleArea(),
 
-                            // 정답 해설 패널 (정답 맞췄을 때만)
-                            _buildInfoPanel(),
-
-                            // 해설 ↔ 선지 최소 거리 = 선지 간 거리(12px)
-                            const SizedBox(height: 12),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // 🔹 선지 영역 (항상 하단 버튼 위에 고정)
+                    // 🔹 선지 영역 (항상 버튼 위에 고정, 아래 기준)
                     Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 0),
@@ -463,10 +501,9 @@ class _QuizScreenState extends State<QuizScreen> {
 
                     const SizedBox(height: 8),
 
-                    // 하단 버튼
+                    // 하단 버튼 (항상 화면 맨 아래 쪽)
                     Padding(
-                      padding:
-                      const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                       child: GestureDetector(
                         onTap: nextEnabled ? _onTapNext : null,
                         child: Container(
@@ -480,8 +517,7 @@ class _QuizScreenState extends State<QuizScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            (c.isLast &&
-                                c.stage == QuizStage.feedback)
+                            (c.isLast && c.stage == QuizStage.feedback)
                                 ? '결과 보기'
                                 : '계속',
                             style: const TextStyle(
@@ -500,24 +536,36 @@ class _QuizScreenState extends State<QuizScreen> {
                 // ===== 힌트 팝업 오버레이 =====
                 if (_showHint)
                   Positioned.fill(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        setState(() {
-                          _showHint = false;
-                        });
-                      },
-                      child: Center(
-                        // 질문 아래 느낌을 주기 위해 약간 위쪽 정렬 + 패딩
-                        child: Padding(
-                          padding:
-                          const EdgeInsets.symmetric(horizontal: 20),
-                          child: _buildTigerPanel(
-                            bgColor: const Color(0xFF4E7C88),
-                            text: c.q.hint,
+                    child: Stack(
+                      children: [
+                        // 🔹 전체 화면 블러 + 약간 어둡게
+                        BackdropFilter(
+                          filter: ImageFilter.blur(
+                            sigmaX: 6.0,
+                            sigmaY: 6.0,
+                          ),
+                          child: Container(
+                            color: Colors.black.withOpacity(0.15),
                           ),
                         ),
-                      ),
+                        // 🔹 화면 중앙에 크게 힌트 패널 (클릭 시만 닫힘)
+                        Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _showHint = false;
+                              });
+                            },
+                            child: Padding(
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 20),
+                              child: _buildHintPanel(
+                                text: c.q.hint,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
               ],
@@ -528,8 +576,6 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 }
-
-
 
 class _OptionTile extends StatelessWidget {
   final String letter;
@@ -591,7 +637,7 @@ class _OptionTile extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            // 🔥 2줄 최대 / 글자 길면 자동 폰트 축소
+            // 🔥 2줄 최대 / 글자 길면 자동 줄바꿈
             Expanded(
               child: AutoSizeText(
                 text,
