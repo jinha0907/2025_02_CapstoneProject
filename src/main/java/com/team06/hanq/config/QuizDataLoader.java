@@ -46,18 +46,23 @@ public class QuizDataLoader {
                 String[] parts = item.getId().split("_");
                 String category = parts.length > 1 ? parts[1] : "general";
 
+                // ✅ difficulty_group → Enum 매핑
+                QuizHeader.Difficulty difficulty = mapDifficulty(item.getDifficultyGroup());
+
+                // 🔹 QuizHeader 생성
                 QuizHeader header = QuizHeader.builder()
                         .category(category)
-                        .difficulty(QuizHeader.Difficulty.NORMAL)
+                        .difficulty(difficulty)
                         .build();
                 quizHeaderRepo.save(header);
 
+                // 🔹 QuizDetails 생성
                 QuizDetails details = QuizDetails.builder()
                         .quizHeader(header)
                         .question(item.getQuestion())
                         .choices(objectMapper.writeValueAsString(item.getChoices()))
                         .answer(item.getAnswer())
-                        .explanation(objectMapper.writeValueAsString(item.getExplanation()))
+                        .explanation(item.getExplanation())  // 이제 단일 문자열
                         .build();
                 quizDetailsRepo.save(details);
 
@@ -73,14 +78,33 @@ public class QuizDataLoader {
         }
     }
 
+    /**
+     * difficulty_group → Enum 매핑
+     * 예: "SO HARD" → HARD, "EASY" → EASY 등
+     */
+    private QuizHeader.Difficulty mapDifficulty(String group) {
+        if (group == null) return QuizHeader.Difficulty.NORMAL;
+
+        String normalized = group.trim().toUpperCase();
+        return switch (normalized) {
+            case "SO EASY", "EASY" -> QuizHeader.Difficulty.EASY;
+            case "NORMAL" -> QuizHeader.Difficulty.NORMAL;
+            case "HARD", "SO HARD" -> QuizHeader.Difficulty.HARD;
+            default -> QuizHeader.Difficulty.NORMAL;
+        };
+    }
+
     // 내부 JSON 구조 매핑 클래스
     @lombok.Data
     static class QuizJsonRecord {
         private String id;
-        private String paragraph;
         private String question;
         private List<String> choices;
         private String answer;
-        private List<String> explanation;
+        private String explanation;     // ✅ String으로 변경
+        private String hint;
+        private Double predictedDifficulty;  // 필요 시 활용 가능
+        private String difficultyGroup;      // ✅ Enum 매핑 대상
+        private List<String> contexts;       // 무시됨
     }
 }
