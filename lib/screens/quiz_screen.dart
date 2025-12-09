@@ -1,7 +1,7 @@
 // lib/screens/quiz_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:auto_size_text/auto_size_text.dart';
 import '../router.dart';
 import '../api/quiz_api.dart';
 import '../DTO/quiz_load.dart'; // QuizLoadItem
@@ -11,20 +11,23 @@ import '../info/user_info.dart';
 /// ===== 모델 =====
 class Choice {
   final String text;
-  final String explanation;
   final bool isAnswer;
-  const Choice(this.text, {required this.explanation, this.isAnswer = false});
+  const Choice(this.text, {this.isAnswer = false});
 }
 
 class Question {
-  final int quizId; // 🔹 서버의 quizId
+  final int quizId;        // 🔹 서버의 quizId
   final String title;
   final List<Choice> choices;
+  final String explanation; // ✅ 정답 설명
+  final String hint;        // ✅ 힌트
 
   const Question({
     required this.quizId,
     required this.title,
     required this.choices,
+    required this.explanation,
+    required this.hint,
   });
 
   int get answerIndex => choices.indexWhere((c) => c.isAnswer);
@@ -37,7 +40,7 @@ class QuizController {
   final List<Question> questions;
 
   int index = 0;
-  int? selected; // 화면에 현재 보이는 선택
+  int? selected;      // 화면에 현재 보이는 선택
   int? firstSelected; // ✅ 채점에 쓰일 '처음 선택'
   int correctCount = 0;
   QuizStage stage = QuizStage.question;
@@ -66,9 +69,9 @@ class QuizController {
     if (stage == QuizStage.question) {
       stage = QuizStage.feedback;
     }
-    selected ??= i; // 화면 첫 선택 기록
+    selected ??= i;      // 화면 첫 선택 기록
     firstSelected ??= i; // 채점용 첫 선택 기록(이미 있으면 유지)
-    selected = i; // 화면용 현재 선택은 언제든 변경 가능
+    selected = i;        // 화면용 현재 선택은 언제든 변경 가능
   }
 
   /// ✅ 다음 문제로 진행(채점은 '처음 선택' 기준)
@@ -118,6 +121,8 @@ class _QuizScreenState extends State<QuizScreen> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  bool _showHint = false; // ✅ 힌트 팝업 on/off
+
   @override
   void initState() {
     super.initState();
@@ -142,20 +147,16 @@ class _QuizScreenState extends State<QuizScreen> {
       // 🔁 QuizLoadItem -> Question/Choice 변환
       final questions = items.map((item) {
         final List<String> choices = item.choices;
-        final String explanation = item.explanation; // ✅ 단일 설명 문자열
 
         final choiceModels = <Choice>[];
 
         for (int i = 0; i < choices.length; i++) {
           final text = choices[i];
-
           final isAnswer = text == item.answer;
 
           choiceModels.add(
             Choice(
               text,
-              // ✅ 현재 구조에서는 선택지와 상관없이 같은 해설을 보여줌
-              explanation: explanation,
               isAnswer: isAnswer,
             ),
           );
@@ -165,6 +166,8 @@ class _QuizScreenState extends State<QuizScreen> {
           quizId: item.quizHeader.quizId, // 🔹 quizId 전달
           title: item.question,
           choices: choiceModels,
+          explanation: item.explanation, // ✅ 정답 설명
+          hint: item.hint,               // ✅ 힌트
         );
       }).toList();
 
@@ -185,6 +188,7 @@ class _QuizScreenState extends State<QuizScreen> {
   Color _optionBg(int i) {
     if (c.stage == QuizStage.feedback && c.selected != null) {
       if (i == c.selected) {
+        // ✅ 정답/오답 색상 유지
         return c.isCorrectNow
             ? const Color(0xFF6D9E8D)
             : const Color(0xFFCC8275);
@@ -194,7 +198,10 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _onTapChoice(int i) {
-    setState(() => c.select(i));
+    setState(() {
+      _showHint = false; // 선택하면 힌트 팝업 닫힘
+      c.select(i);
+    });
   }
 
   void _onTapNext() {
@@ -213,8 +220,82 @@ class _QuizScreenState extends State<QuizScreen> {
         },
       );
     } else {
-      setState(() {});
+      setState(() {
+        _showHint = false; // 다음 문제로 넘어갈 때 힌트 초기화
+      });
     }
+  }
+
+  void _toggleHint() {
+    if (c.q.hint.isEmpty) return;
+
+    setState(() {
+      _showHint = !_showHint;   // ← 다시 누르면 false 로 변경되면서 팝업 닫힘
+    });
+  }
+
+  Widget _buildTigerPanel({
+    required Color bgColor,
+    required String text,
+  }) {
+    if (text.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      constraints: const BoxConstraints(
+        minHeight: 120,
+        maxHeight: 160,
+      ),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/images/tiger_image.png',
+            width: 60,
+            height: 120,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w600,
+                  height: 1.54,
+                ),
+                softWrap: true,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 문제 아래, 정답 해설이 들어갈 영역 (힌트는 팝업으로만 표시)
+  Widget _buildInfoPanel() {
+    // ✅ 정답을 클릭했을 때만 explanation 표시
+    if (c.stage == QuizStage.feedback &&
+        c.selectedChoice != null &&
+        c.isCorrectNow) {
+      return _buildTigerPanel(
+        bgColor: const Color(0xFF6D9E8D),
+        text: c.q.explanation,
+      );
+    }
+
+    // 아무것도 안 보여줌
+    return const SizedBox.shrink();
   }
 
   @override
@@ -253,201 +334,192 @@ class _QuizScreenState extends State<QuizScreen> {
             height: 812,
             clipBehavior: Clip.antiAlias,
             decoration: const BoxDecoration(color: Color(0xFFEDE8E3)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Stack(
               children: [
-                const SizedBox(height: 40),
-                const Center(
-                  child: Text(
-                    '오늘의 퀴즈',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // 진행바 + 인덱스
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      Stack(
+                // ===== 메인 내용 =====
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 40),
+                    // 상단 제목 + 힌트 아이콘 (아이콘을 오른쪽 끝에)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
                         children: [
-                          Container(
-                            width: totalBarWidth,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF4F3F6),
-                              borderRadius: BorderRadius.circular(16),
+                          const Text(
+                            '오늘의 퀴즈',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 18,
+                              fontFamily: 'Roboto',
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          Container(
-                            width: filledWidth.clamp(0, totalBarWidth),
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4E7C88),
-                              borderRadius: BorderRadius.circular(16),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: _toggleHint,
+                            icon: const Icon(
+                              Icons.lightbulb_outline,
+                              size: 24,
+                              color: Color(0xFF4E7C88),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${c.index + 1}/${c.total}',
-                        style: const TextStyle(
-                          color: Color(0xFF757575),
-                          fontSize: 14,
-                          fontFamily: 'Roboto',
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                    const SizedBox(height: 12),
 
-                const SizedBox(height: 20),
-
-                // 내용 전체 영역 (문제 + 해설 + 선지)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return SingleChildScrollView(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: constraints.maxHeight,
-                            ),
-                            child: IntrinsicHeight(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // 문제
-                                  Text(
-                                    c.q.title,
-                                    style: const TextStyle(
-                                      color: Color(0xFF2C2C2C),
-                                      fontSize: 17,
-                                      fontFamily: 'Roboto',
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.5,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 16),
-
-                                  // 피드백 패널
-                                  if (c.stage == QuizStage.feedback &&
-                                      c.selectedChoice != null)
-                                    Container(
-                                      constraints: const BoxConstraints(
-                                        minHeight: 120,
-                                        maxHeight: 160,
-                                      ),
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: c.isCorrectNow
-                                            ? const Color(0xFF6D9E8D)
-                                            : const Color(0xFFCC8275),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/tiger_image.png',
-                                            width: 60,
-                                            height: 120,
-                                            fit: BoxFit.contain,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: SingleChildScrollView(
-                                              child: Text(
-                                                c.selectedChoice!.explanation,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 13,
-                                                  fontFamily: 'Roboto',
-                                                  fontWeight: FontWeight.w600,
-                                                  height: 1.54,
-                                                ),
-                                                softWrap: true,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                  const SizedBox(height: 24),
-
-                                  const Spacer(),
-
-                                  // 선지들 (아래쪽에 붙음)
-                                  Column(
-                                    children: List.generate(
-                                      c.q.choices.length,
-                                          (i) => Padding(
-                                        padding:
-                                        const EdgeInsets.only(bottom: 12),
-                                        child: _OptionTile(
-                                          letter:
-                                          String.fromCharCode(65 + i),
-                                          text: c.q.choices[i].text,
-                                          color: _optionBg(i),
-                                          isSelected: c.selected == i,
-                                          onTap: () => _onTapChoice(i),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                ],
+                    // 진행바 + 인덱스
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          Stack(
+                            children: [
+                              Container(
+                                width: totalBarWidth,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF4F3F6),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                               ),
+                              Container(
+                                width: filledWidth.clamp(0, totalBarWidth),
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF4E7C88),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${c.index + 1}/${c.total}',
+                            style: const TextStyle(
+                              color: Color(0xFF757575),
+                              fontSize: 14,
+                              fontFamily: 'Roboto',
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     ),
-                  ),
+
+                    const SizedBox(height: 20),
+
+                    // 🔹 문제 + 정답 해설 영역 (위쪽만 스크롤)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 문제
+                            Text(
+                              c.q.title,
+                              style: const TextStyle(
+                                color: Color(0xFF2C2C2C),
+                                fontSize: 17,
+                                fontFamily: 'Roboto',
+                                fontWeight: FontWeight.w600,
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // 정답 해설 패널 (정답 맞췄을 때만)
+                            _buildInfoPanel(),
+
+                            // 해설 ↔ 선지 최소 거리 = 선지 간 거리(12px)
+                            const SizedBox(height: 12),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // 🔹 선지 영역 (항상 하단 버튼 위에 고정)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 0),
+                      child: Column(
+                        children: List.generate(
+                          c.q.choices.length,
+                              (i) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _OptionTile(
+                              letter: String.fromCharCode(65 + i),
+                              text: c.q.choices[i].text,
+                              color: _optionBg(i),
+                              isSelected: c.selected == i,
+                              onTap: () => _onTapChoice(i),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // 하단 버튼
+                    Padding(
+                      padding:
+                      const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                      child: GestureDetector(
+                        onTap: nextEnabled ? _onTapNext : null,
+                        child: Container(
+                          width: double.infinity,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: nextEnabled
+                                ? const Color(0xFF4E7C88)
+                                : const Color(0xFFB0BEC5),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            (c.isLast &&
+                                c.stage == QuizStage.feedback)
+                                ? '결과 보기'
+                                : '계속',
+                            style: const TextStyle(
+                              color: Color(0xFFF4F3F6),
+                              fontSize: 16,
+                              fontFamily: 'Roboto',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
-                // 하단 버튼
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                  child: GestureDetector(
-                    onTap: nextEnabled ? _onTapNext : null,
-                    child: Container(
-                      width: double.infinity,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: nextEnabled
-                            ? const Color(0xFF4E7C88)
-                            : const Color(0xFFB0BEC5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        (c.isLast && c.stage == QuizStage.feedback)
-                            ? '결과 보기'
-                            : '계속',
-                        style: const TextStyle(
-                          color: Color(0xFFF4F3F6),
-                          fontSize: 16,
-                          fontFamily: 'Roboto',
-                          fontWeight: FontWeight.w600,
+                // ===== 힌트 팝업 오버레이 =====
+                if (_showHint)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        setState(() {
+                          _showHint = false;
+                        });
+                      },
+                      child: Center(
+                        // 질문 아래 느낌을 주기 위해 약간 위쪽 정렬 + 패딩
+                        child: Padding(
+                          padding:
+                          const EdgeInsets.symmetric(horizontal: 20),
+                          child: _buildTigerPanel(
+                            bgColor: const Color(0xFF4E7C88),
+                            text: c.q.hint,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -456,6 +528,8 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 }
+
+
 
 class _OptionTile extends StatelessWidget {
   final String letter;
@@ -488,6 +562,8 @@ class _OptionTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(width: 16),
+
+            // 원형 A/B/C/D
             Container(
               width: 32,
               height: 32,
@@ -512,14 +588,19 @@ class _OptionTile extends StatelessWidget {
                 ),
               ),
             ),
+
             const SizedBox(width: 12),
+
+            // 🔥 2줄 최대 / 글자 길면 자동 폰트 축소
             Expanded(
-              child: Text(
+              child: AutoSizeText(
                 text,
-                softWrap: true,
+                maxLines: 2,
+                minFontSize: 12,
+                maxFontSize: 15,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Color(0xFF2C2C2C),
-                  fontSize: 15,
                   fontFamily: 'Roboto',
                   fontWeight: FontWeight.w600,
                   height: 1.3,

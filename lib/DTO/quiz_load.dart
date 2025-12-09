@@ -35,7 +35,8 @@ class QuizLoadItem {
   final String question;
   final List<String> choices;   // 파싱된 보기 리스트
   final String answer;
-  final String explanation;     // ✅ 이제 단일 문자열 설명
+  final String explanation;     // ✅ 단일 설명
+  final String hint;            // ✅ 새로 추가된 힌트
 
   QuizLoadItem({
     required this.detailId,
@@ -44,10 +45,11 @@ class QuizLoadItem {
     required this.choices,
     required this.answer,
     required this.explanation,
+    required this.hint,
   });
 
   factory QuizLoadItem.fromJson(Map<String, dynamic> json) {
-    // ✅ 응답에서 choices 는 여전히 "JSON 배열 문자열"
+    // ✅ 응답에서 choices 는 "JSON 배열 문자열"
     final rawChoices = json['choices'] as String;
 
     final decodedChoices = (jsonDecode(rawChoices) as List)
@@ -62,7 +64,8 @@ class QuizLoadItem {
       question: json['question'] as String,
       choices: decodedChoices,
       answer: json['answer'] as String,
-      explanation: json['explanation'] as String, // ✅ 그대로 문자열 사용
+      explanation: json['explanation'] as String,
+      hint: (json['hint'] as String?) ?? '', // 혹시 null이면 빈 문자열
     );
   }
 
@@ -71,11 +74,10 @@ class QuizLoadItem {
       'detailId': detailId,
       'quizHeader': quizHeader.toJson(),
       'question': question,
-      // 서버 포맷에 맞추려면 다시 문자열로 인코딩
       'choices': jsonEncode(choices),
       'answer': answer,
-      // ✅ explanation 은 이제 단일 문자열
       'explanation': explanation,
+      'hint': hint,
     };
   }
 }
