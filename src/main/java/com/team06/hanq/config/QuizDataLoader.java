@@ -1,5 +1,6 @@
 package com.team06.hanq.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team06.hanq.entity.QuizDetails;
@@ -96,6 +97,7 @@ public class QuizDataLoader {
     }
 
     // 내부 JSON 구조 매핑 클래스
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @lombok.Data
     static class QuizJsonRecord {
         private String id;
