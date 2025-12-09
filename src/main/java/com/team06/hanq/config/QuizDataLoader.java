@@ -30,39 +30,40 @@ public class QuizDataLoader {
                 return;
             }
 
+            // JSON 파일 → Java 객체 리스트 변환
             List<QuizJsonRecord> quizList = objectMapper.readValue(file, new TypeReference<>() {});
             int inserted = 0;
             int skipped = 0;
 
             for (QuizJsonRecord item : quizList) {
-                // 🔍 이미 동일한 question이 있으면 skip
+                // 이미 동일한 question이 있으면 skip
                 boolean exists = quizDetailsRepo.existsByQuestion(item.getQuestion());
                 if (exists) {
                     skipped++;
                     continue;
                 }
 
-                // ✅ category = id에서 추출 ("KIIP_economy_1" → "economy")
+                // category 추출 ("KIIP_economy_1" → "economy")
                 String[] parts = item.getId().split("_");
                 String category = parts.length > 1 ? parts[1] : "general";
 
-                // ✅ difficulty_group → Enum 매핑
+                // difficulty_group → Enum 매핑
                 QuizHeader.Difficulty difficulty = mapDifficulty(item.getDifficultyGroup());
 
-                // 🔹 QuizHeader 생성
+                // QuizHeader 생성
                 QuizHeader header = QuizHeader.builder()
                         .category(category)
                         .difficulty(difficulty)
                         .build();
                 quizHeaderRepo.save(header);
 
-                // 🔹 QuizDetails 생성
+                // QuizDetails 생성
                 QuizDetails details = QuizDetails.builder()
                         .quizHeader(header)
                         .question(item.getQuestion())
                         .choices(objectMapper.writeValueAsString(item.getChoices()))
                         .answer(item.getAnswer())
-                        .explanation(item.getExplanation())  // 이제 단일 문자열
+                        .explanation(item.getExplanation()) // String으로 단일 해설 저장
                         .build();
                 quizDetailsRepo.save(details);
 
@@ -101,10 +102,10 @@ public class QuizDataLoader {
         private String question;
         private List<String> choices;
         private String answer;
-        private String explanation;     // ✅ String으로 변경
+        private String explanation;
         private String hint;
-        private Double predictedDifficulty;  // 필요 시 활용 가능
-        private String difficultyGroup;      // ✅ Enum 매핑 대상
-        private List<String> contexts;       // 무시됨
+        private String difficultyGroup;     // ✅ Enum 매핑용
+        private Double predictedDifficulty; // 🚫 무시됨
+        private List<String> contexts;      // 🚫 무시됨
     }
 }
