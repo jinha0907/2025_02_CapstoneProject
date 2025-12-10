@@ -5,6 +5,21 @@ import 'package:korean_culture_quiz/DTO/quiz_stats.dart';
 
 import '../../info/user_info.dart'; // 🔥 UserInfo에서 totalExp, tier 읽기
 
+/// 티어 진행도 정보 묶음
+class _ExpProgress {
+  final double ratio;          // 0.0 ~ 1.0
+  final int currentLocalExp;   // 현재까지 누적 경험치 (표시용)
+  final int tierMaxExp;        // 누적 기준 전체 통 크기 (예: 1000, 5000, 9000)
+
+  const _ExpProgress({
+    required this.ratio,
+    required this.currentLocalExp,
+    required this.tierMaxExp,
+  });
+
+  int get remainingExp => (tierMaxExp - currentLocalExp).clamp(0, tierMaxExp);
+}
+
 class LearningStatusTabBody extends StatelessWidget {
   final List<WeeklyQuizCount> weeklyData;
   final String tierName;
@@ -20,53 +35,87 @@ class LearningStatusTabBody extends StatelessWidget {
   });
 
   /// 🔥 실제 로그인 유저의 totalExp + tier 를 기준으로
-  /// 0.0 ~ 1.0 사이의 진행도를 계산
-  double _calcExpRatio() {
+  /// ratio + (현재 EXP / 누적 통 크기) 를 모두 계산해서 반환
+  ///
+  /// 브론즈: cap = 1000
+  /// 실버  : cap = 5000
+  /// 골드  : cap = 9000
+  /// 플래티넘: exp 기준으로 1.0, 표시는 exp 단독
+  _ExpProgress _calcExpProgress() {
     final user = UserInfo.currentUser;
 
-    // 로그인 안 돼 있으면, 기존에 주던 값 사용 (혹은 0.0)
+    // 로그인 안 돼 있으면, 기존 completionRatio 만 사용
     if (user == null) {
-      return completionRatio.clamp(0.0, 1.0);
+      final r = completionRatio.clamp(0.0, 1.0);
+      return _ExpProgress(ratio: r, currentLocalExp: 0, tierMaxExp: 0);
     }
 
     final int exp = user.totalExp;
-    final String tier = user.tier; // ex: '브론즈', '실버', '골드', '플래티넘'
+    final String tierRaw = user.tier;
+    final String tier = tierRaw.toLowerCase();
 
-    // 플래티넘은 항상 꽉 찬 상태
-    if (tier.contains('플래티넘')) {
-      return 1.0;
+    // 브론즈: 0~999 → cap = 1000
+    if (tier.contains('브론즈') || tier.contains('bronze')) {
+      const cap = 1000;
+      final r = (exp / cap).clamp(0.0, 1.0);
+      return _ExpProgress(
+        ratio: r,
+        currentLocalExp: exp.clamp(0, cap),
+        tierMaxExp: cap,
+      );
     }
 
-    // 혹시 영어로 들어올 수도 있을 상황까지 대비 (선택사항)
-    final lower = tier.toLowerCase();
-
-    // 브론즈 0~999 → 통 크기 1000
-    if (tier.contains('브론즈') || lower.contains('bronze')) {
-      final local = exp.clamp(0, 999);
-      return local / 1000.0;
+    // 실버: 1000~4999 → cap = 5000
+    if (tier.contains('실버') || tier.contains('silver')) {
+      const cap = 5000;
+      final r = (exp / cap).clamp(0.0, 1.0);
+      return _ExpProgress(
+        ratio: r,
+        currentLocalExp: exp.clamp(0, cap),
+        tierMaxExp: cap,
+      );
     }
 
-    // 실버 1000~4999 → 통 크기 4000
-    if (tier.contains('실버') || lower.contains('silver')) {
-      final local = (exp - 1000).clamp(0, 3999); // 0 ~ 3999
-      return local / 4000.0;
+    // 골드: 5000~8999 → cap = 9000
+    if (tier.contains('골드') || tier.contains('gold')) {
+      const cap = 9000;
+      final r = (exp / cap).clamp(0.0, 1.0);
+      return _ExpProgress(
+        ratio: r,
+        currentLocalExp: exp.clamp(0, cap),
+        tierMaxExp: cap,
+      );
     }
 
-    // 골드 5000~9999 → 통 크기 5000
-    if (tier.contains('골드') || lower.contains('gold')) {
-      final local = (exp - 5000).clamp(0, 4999); // 0 ~ 4999
-      return local / 5000.0;
+    // 플래티넘 이상 → 게이지는 항상 1.0, 표시는 exp 단독
+    if (tier.contains('플래티넘') || tier.contains('platinum')) {
+      return _ExpProgress(
+        ratio: 1.0,
+        currentLocalExp: exp,
+        tierMaxExp: exp,
+      );
     }
 
-    // 만약 tier 문자열이 예외적인 값이면:
-    // 1만 기준으로 대충 비율 계산 (혹은 0.0으로 둬도 됨)
-    return (exp.clamp(0, 10000) / 10000.0).toDouble();
+    // 예외적 티어 → 그냥 전체 기준 10,000 cap
+    const cap = 10000;
+    final r = (exp / cap).clamp(0.0, 1.0);
+    return _ExpProgress(
+      ratio: r,
+      currentLocalExp: exp.clamp(0, cap),
+      tierMaxExp: cap,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 여기서 현재 유저 기준으로 진행도 계산
-    final expRatio = _calcExpRatio();
+    // 🔥 여기서 현재 유저 기준으로 진행도 + 누적 통 크기 계산
+    final expProgress = _calcExpProgress();
+    final expRatio = expProgress.ratio;
+
+    final String userTier = UserInfo.currentUser?.tier ?? tierName;
+    final String userTierLower = userTier.toLowerCase();
+    final bool isPlatinum =
+        userTier.contains('플래티넘') || userTierLower.contains('platinum');
 
     return Container(
       color: const Color(0xFFEDE8E3),
@@ -145,6 +194,7 @@ class LearningStatusTabBody extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
+                  // 왼쪽: 텍스트
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,7 +218,8 @@ class LearningStatusTabBody extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Text('🌱', style: TextStyle(fontSize: 26)),
+                  // 오른쪽: 티어 PNG + (플래티넘이면 금색 테두리)
+                  _TierIcon(tierName: tierName),
                 ],
               ),
             ),
@@ -176,7 +227,38 @@ class LearningStatusTabBody extends StatelessWidget {
             const SizedBox(height: 12),
 
             // ===== 프로그레스 바 (경험치 기반) =====
-            _ProgressBar(completionRatio: expRatio),
+            // 플래티넘이면 숨기기
+            if (!isPlatinum) _ProgressBar(completionRatio: expRatio),
+
+            if (!isPlatinum) const SizedBox(height: 6),
+
+            // ===== 프로그레스 바 하단: 현재 티어 경험치 정보 =====
+            if (expProgress.tierMaxExp > 0)
+              Align(
+                alignment: Alignment.center,
+                child: () {
+                  // 플래티넘이면 "현재 EXP만" 표시
+                  if (isPlatinum) {
+                    return Text(
+                      '${expProgress.currentLocalExp} EXP',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF6B6B6B),
+                      ),
+                    );
+                  }
+
+                  // 나머지 티어는 누적 통 기준 / 남은 EXP 표시
+                  return Text(
+                        '${expProgress.currentLocalExp} / ${expProgress.tierMaxExp} EXP'
+                        ' · 다음 티어까지 ${expProgress.remainingExp} EXP',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B6B6B),
+                    ),
+                  );
+                }(),
+              ),
 
             const SizedBox(height: 10),
 
@@ -268,6 +350,70 @@ class _ProgressBar extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// 🔥 티어 PNG 아이콘 전용 위젯
+/// 플래티넘이면 금색 테두리 적용
+class _TierIcon extends StatelessWidget {
+  final String tierName;
+
+  const _TierIcon({required this.tierName});
+
+  String _assetPathForTier(String tier) {
+    final lower = tier.toLowerCase();
+
+    if (tier.contains('브론즈') || lower.contains('bronze')) {
+      return 'assets/images/bronze.png';
+    }
+    if (tier.contains('실버') || lower.contains('silver')) {
+      return 'assets/images/silver.png';
+    }
+    if (tier.contains('골드') || lower.contains('gold')) {
+      return 'assets/images/gold.png';
+    }
+    if (tier.contains('플래티넘') || lower.contains('platinum')) {
+      return 'assets/images/platinum.png';
+    }
+
+    // 🔥 디폴트 = 브론즈
+    return 'assets/images/bronze.png';
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    // 로그인 유저 티어가 있으면 그걸 우선, 없으면 파라미터 tierName 사용
+    final String userTier = UserInfo.currentUser?.tier ?? tierName;
+    final String lower = userTier.toLowerCase();
+    final bool isPlatinum =
+        userTier.contains('플래티넘') || lower.contains('platinum');
+
+    final assetPath = _assetPathForTier(userTier);
+
+    final image = Image.asset(
+      assetPath,
+      width: 40,
+      height: 40,
+      fit: BoxFit.contain,
+    );
+
+    if (!isPlatinum) {
+      return image;
+    }
+
+    // 플래티넘: 금색 테두리
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: const Color(0xFFFFD700), // 골드색
+          width: 2,
+        ),
+      ),
+      child: ClipOval(child: image),
     );
   }
 }

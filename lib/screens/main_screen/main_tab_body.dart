@@ -8,7 +8,7 @@ class MainTabBody extends StatelessWidget {
   final List<WeeklyQuizCount> weeklyData;
   final VoidCallback onTodayQuizTap; // 오늘의 퀴즈 탭 콜백
 
-  // 🔥 추가: 메인 화면에서 학습 현황 차트 카드를 탭했을 때 학습현황 탭으로 전환하는 콜백
+  // 🔥 메인 화면에서 학습 현황 차트 카드를 탭했을 때 학습현황 탭으로 전환하는 콜백
   final VoidCallback onLearningStatusTap;
 
   const MainTabBody({
@@ -62,15 +62,16 @@ class MainTabBody extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  const Text('🌱', style: TextStyle(fontSize: 26)),
+                  const SizedBox(width: 10),
+                  // 🔥 여기: 학습현황 탭과 동일한 티어 아이콘 사용
+                  _TierIcon(tierName: tier),
                 ],
               ),
               subtitle: '퀴즈를 풀어 단계를 올려보세요!',
               onTap: () {},
               showChevron: false,
               backgroundColor: Colors.white,
-              contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              contentPadding: const EdgeInsets.fromLTRB(24, 18, 12, 8),
             ),
           ),
 
@@ -327,6 +328,68 @@ class _EmojiBadge extends StatelessWidget {
           fontSize: 30,
         ),
       ),
+    );
+  }
+}
+
+/// 🔥 메인 탭용 티어 PNG 아이콘
+/// learning_status_tab_body.dart 의 _TierIcon 과 동일한 규칙으로 동작
+class _TierIcon extends StatelessWidget {
+  final String tierName;
+
+  const _TierIcon({required this.tierName});
+
+  String _assetPathForTier(String tier) {
+    final lower = tier.toLowerCase();
+
+    if (tier.contains('브론즈') || lower.contains('bronze')) {
+      return 'assets/images/bronze.png';
+    }
+    if (tier.contains('실버') || lower.contains('silver')) {
+      return 'assets/images/silver.png';
+    }
+    if (tier.contains('골드') || lower.contains('gold')) {
+      return 'assets/images/gold.png';
+    }
+    if (tier.contains('플래티넘') || lower.contains('platinum')) {
+      return 'assets/images/platinum.png';
+    }
+
+    // 🔥 디폴트 = 브론즈
+    return 'assets/images/bronze.png';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tier = tierName;
+    final lower = tier.toLowerCase();
+    final bool isPlatinum =
+        tier.contains('플래티넘') || lower.contains('platinum');
+
+    final assetPath = _assetPathForTier(tier);
+
+    final image = Image.asset(
+      assetPath,
+      width: 28, // 메인 헤더라서 살짝 작게
+      height: 28,
+      fit: BoxFit.contain,
+    );
+
+    if (!isPlatinum) {
+      return image;
+    }
+
+    // 플래티넘: 금색 테두리 (학습현황과 느낌 맞추기용)
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: const Color(0xFFFFD700), // 골드색
+          width: 2,
+        ),
+      ),
+      child: ClipOval(child: image),
     );
   }
 }
