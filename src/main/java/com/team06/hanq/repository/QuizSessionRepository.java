@@ -38,4 +38,24 @@ public interface QuizSessionRepository extends JpaRepository<QuizSession, Long> 
 """)
     List<Object[]> countSolvedByCategory(@Param("userId") Long userId);
 
+    @Query("""
+    SELECT h.category AS category, COUNT(qs.quizId) AS count
+    FROM QuizSession qs
+    JOIN QuizHeader h ON qs.quizId = h.quizId
+    WHERE qs.userId = :userId AND qs.isCorrect = true
+    GROUP BY h.category
+    ORDER BY count DESC
+""")
+    List<Object[]> countCorrectByCategory(@Param("userId") Long userId);
+
+    @Query("""
+    SELECT h.category AS category, COUNT(qs.quizId) AS count
+    FROM QuizSession qs
+    JOIN QuizHeader h ON qs.quizId = h.quizId
+    WHERE qs.userId = :userId AND qs.isCorrect = false
+    GROUP BY h.category
+    ORDER BY count DESC
+""")
+    List<Object[]> countWrongByCategory(@Param("userId") Long userId);
+
 }

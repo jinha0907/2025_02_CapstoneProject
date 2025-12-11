@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.team06.hanq.dto.CategoryStatsDTO;
+import com.team06.hanq.dto.CategoryPerformanceDTO;
+
 
 import java.util.List;
 
@@ -53,6 +55,15 @@ public class QuizController {
     @ApiResponseDocs.DefaultErrorResponses
     public ResponseEntity<CategoryStatsDTO> getSolvedByCategory(@PathVariable Long userId) {
         return ResponseEntity.ok(quizService.getSolvedByCategory(userId));
+    }
+
+    @GetMapping("/stats/category/performance/{userId}")
+    @Operation(summary = "유저 카테고리별 맞힌/틀린 문제 수",
+            description = "유저가 카테고리별로 얼마나 맞췄는지, 틀렸는지를 반환합니다.")
+    @ApiResponse(responseCode = "200", description = "카테고리별 성과 조회 성공")
+    @ApiResponseDocs.DefaultErrorResponses
+    public ResponseEntity<CategoryPerformanceDTO> getCategoryPerformance(@PathVariable Long userId) {
+        return ResponseEntity.ok(quizService.getCategoryPerformance(userId));
     }
 
 }

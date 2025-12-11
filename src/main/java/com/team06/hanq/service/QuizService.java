@@ -12,7 +12,8 @@ import org.springframework.stereotype.Service;
 import com.team06.hanq.dto.UserAccuracyDTO;
 import com.team06.hanq.dto.CategoryStatsDTO;
 import com.team06.hanq.dto.CategoryStatsDTO.CategoryCount;
-
+import com.team06.hanq.dto.CategoryPerformanceDTO;
+import com.team06.hanq.dto.CategoryPerformanceDTO.CategoryStat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -148,23 +149,23 @@ public class QuizService {
     }
 
     public CategoryStatsDTO getSolvedByCategory(Long userId) {
-        // 1️⃣ DB에서 유저가 푼 문제의 카테고리별 개수 조회
+        // DB에서 유저가 푼 문제의 카테고리별 개수 조회
         List<Object[]> results = quizSessionRepo.countSolvedByCategory(userId);
 
-        // 2️⃣ DB에 존재하는 전체 카테고리 가져오기
+        // DB에 존재하는 전체 카테고리 가져오기
         List<String> allCategories = quizDetailsRepo.findAll().stream()
                 .map(q -> q.getQuizHeader().getCategory())
                 .distinct()
                 .toList();
 
-        // 3️⃣ map으로 변환
+        // map으로 변환
         Map<String, Long> solvedMap = results.stream()
                 .collect(Collectors.toMap(
                         r -> (String) r[0],
                         r -> (Long) r[1]
                 ));
 
-        // 4️⃣ 전체 카테고리를 기준으로, 푼 게 없으면 0
+        // 전체 카테고리를 기준으로, 푼 게 없으면 0
         List<CategoryCount> categoryList = allCategories.stream()
                 .map(cat -> CategoryCount.builder()
                         .category(cat)
@@ -177,5 +178,27 @@ public class QuizService {
                 .categories(categoryList)
                 .build();
     }
+
+
+    public CategoryPerformanceDTO getCategoryPerformance(Long userId) {
+        // 카테고리별 정답 수
+        List<Object[]> correctResults = quizSessionRepo.countCorrectByCategory(userId);
+        List<CategoryStat> correctList = correctResults.stream()
+                .map(r -> new CategoryStat((String) r[0], (Long) r[1]))
+                .toList();
+
+        // 카테고리별 오답 수
+        List<Object[]> wrongResults = quizSessionRepo.countWrongByCategory(userId);
+        List<CategoryStat> wrongList = wrongResults.stream()
+                .map(r -> new CategoryStat((String) r[0], (Long) r[1]))
+                .toList();
+
+        return CategoryPerformanceDTO.builder()
+                .userId(userId)
+                .mostCorrect(correctList)
+                .mostWrong(wrongList)
+                .build();
+    }
+
 
 }
