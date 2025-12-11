@@ -135,9 +135,6 @@ class _MainTabScaffoldState extends State<MainTabScaffold> {
                 const InfoTabBody(),
                 LearningStatusTabBody(
                   weeklyData: weeklyData,       // ✅ 여기도 타입 맞게 DTO 리스트
-                  tierName: _tier,
-                  totalQuizCount: _totalQuizCount,
-                  completionRatio: _completionRatio,
                 ),
                 const SettingsTabBody(),
               ],

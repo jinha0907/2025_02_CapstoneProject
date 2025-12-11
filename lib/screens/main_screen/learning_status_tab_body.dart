@@ -1,15 +1,23 @@
 // lib/screens/tabs/learning_status_tab_body.dart
-import 'package:flutter/material.dart';
-import 'package:korean_culture_quiz/widgets/weekly_study_chart.dart';
-import 'package:korean_culture_quiz/DTO/quiz_stats.dart';
 
-import '../../info/user_info.dart'; // 🔥 UserInfo에서 totalExp, tier 읽기
+import 'package:flutter/material.dart';
+
+import '../../widgets/weekly_study_chart.dart';
+import '../../DTO/quiz_stats.dart';
+
+import '../../DTO/user_quiz_accuracy.dart';
+import '../../DTO/quiz_category_stats.dart';
+import '../../DTO/quiz_category_performance.dart';
+import '../../DTO/quiz_accuracy_trend.dart';
+
+import '../../api/learning_status_api.dart';
+import '../../info/user_info.dart';
 
 /// 티어 진행도 정보 묶음
 class _ExpProgress {
-  final double ratio;          // 0.0 ~ 1.0
-  final int currentLocalExp;   // 현재까지 누적 경험치 (표시용)
-  final int tierMaxExp;        // 누적 기준 전체 통 크기 (예: 1000, 5000, 9000)
+  final double ratio; // 0.0 ~ 1.0
+  final int currentLocalExp; // 현재까지 누적 경험치 (표시용)
+  final int tierMaxExp; // 누적 기준 전체 통 크기 (예: 1000, 5000, 9000)
 
   const _ExpProgress({
     required this.ratio,
@@ -20,19 +28,71 @@ class _ExpProgress {
   int get remainingExp => (tierMaxExp - currentLocalExp).clamp(0, tierMaxExp);
 }
 
-class LearningStatusTabBody extends StatelessWidget {
+/// 학습현황 탭 화면
+class LearningStatusTabBody extends StatefulWidget {
+  /// 주간 학습량 그래프용 데이터 (MainTabScaffold 에서 전달)
   final List<WeeklyQuizCount> weeklyData;
-  final String tierName;
-  final int totalQuizCount;
-  final double completionRatio; // 기존 필드(호환용, 없애도 되지만 일단 유지)
 
   const LearningStatusTabBody({
     super.key,
     required this.weeklyData,
-    this.tierName = '새싹',
-    this.totalQuizCount = 0,
-    this.completionRatio = 0.0,
   });
+
+  @override
+  State<LearningStatusTabBody> createState() => _LearningStatusTabBodyState();
+}
+
+class _LearningStatusTabBodyState extends State<LearningStatusTabBody> {
+  bool _loading = false;
+  String? _errorMessage;
+
+  UserQuizAccuracy? _accuracy;
+  List<CategorySolvedCount> _categorySolved = const [];
+  UserCategoryPerformanceStats? _categoryPerformance;
+  UserAccuracyTrend? _accuracyTrend;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLearningStatus();
+  }
+
+  Future<void> _loadLearningStatus() async {
+    final user = UserInfo.currentUser;
+    if (user == null) {
+      setState(() {
+        _errorMessage = '로그인 정보가 없어 학습현황을 불러올 수 없습니다.';
+      });
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final bundle =
+      await LearningStatusApi.instance.fetchLearningStatusBundle(user.userId);
+
+      setState(() {
+        _accuracy = bundle.accuracy;
+        _categorySolved = bundle.categorySolved;
+        _categoryPerformance = bundle.categoryPerformance;
+        _accuracyTrend = bundle.accuracyTrend;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = '학습현황을 불러오는 중 오류가 발생했습니다.\n$e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
 
   /// 🔥 실제 로그인 유저의 totalExp + tier 를 기준으로
   /// ratio + (현재 EXP / 누적 통 크기) 를 모두 계산해서 반환
@@ -44,10 +104,9 @@ class LearningStatusTabBody extends StatelessWidget {
   _ExpProgress _calcExpProgress() {
     final user = UserInfo.currentUser;
 
-    // 로그인 안 돼 있으면, 기존 completionRatio 만 사용
+    // 로그인 안 돼 있으면, 진행도 0
     if (user == null) {
-      final r = completionRatio.clamp(0.0, 1.0);
-      return _ExpProgress(ratio: r, currentLocalExp: 0, tierMaxExp: 0);
+      return const _ExpProgress(ratio: 0.0, currentLocalExp: 0, tierMaxExp: 0);
     }
 
     final int exp = user.totalExp;
@@ -108,14 +167,36 @@ class LearningStatusTabBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 여기서 현재 유저 기준으로 진행도 + 누적 통 크기 계산
-    final expProgress = _calcExpProgress();
-    final expRatio = expProgress.ratio;
-
-    final String userTier = UserInfo.currentUser?.tier ?? tierName;
+    final user = UserInfo.currentUser;
+    final String userTier = user?.tier ?? '새싹';
     final String userTierLower = userTier.toLowerCase();
     final bool isPlatinum =
         userTier.contains('플래티넘') || userTierLower.contains('platinum');
+
+    final expProgress = _calcExpProgress();
+    final double expRatio = expProgress.ratio;
+
+    // 정답률 표시용
+    final acc = _accuracy;
+    final int totalQuizCount = acc?.totalQuizzes ?? 0;
+    final int correctQuizCount = acc?.correctQuizzes ?? 0;
+    final double accuracyPercent = acc?.accuracyPercent ?? 0.0;
+
+    // 많이 맞힌/틀린 카테고리 리스트
+    final mostCorrectCategories =
+        _categoryPerformance?.mostCorrect ?? const <CategoryPerformanceItem>[];
+    final mostWrongCategories =
+        _categoryPerformance?.mostWrong ?? const <CategoryPerformanceItem>[];
+
+    // ===== 로딩 화면 =====
+    if (_loading) {
+      return Container(
+        color: const Color(0xFFEDE8E3),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     return Container(
       color: const Color(0xFFEDE8E3),
@@ -126,7 +207,27 @@ class LearningStatusTabBody extends StatelessWidget {
           children: [
             const SizedBox(height: 4),
 
-            // ===== 상단: 호랑이 + 설명 카드 =====
+            // 에러 표시
+            if (_errorMessage != null)
+              Container(
+                width: double.infinity,
+                padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFE0E0),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _errorMessage!,
+                  style: const TextStyle(
+                    color: Color(0xFFB00020),
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+
+            // ===== 상단: 호랑이 + 설명 카드 (흰색 카드) =====
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -144,13 +245,20 @@ class LearningStatusTabBody extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Colors.white,              // 🔥 카드 색 통일
                       borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: Column(
+                    child: const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
-                      children: const [
+                      children: [
                         Text(
                           '학습 현황',
                           textAlign: TextAlign.center,
@@ -161,7 +269,7 @@ class LearningStatusTabBody extends StatelessWidget {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          '이번 주 학습 진행 상황이에요.',
+                          '내 학습량과 정답률, 카테고리별 성과를 한눈에 확인해보세요.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13,
@@ -177,11 +285,11 @@ class LearningStatusTabBody extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // ===== 티어 정보 박스 (프로그레스 바 위) =====
+            // ===== 티어 정보 박스 (흰색 카드) =====
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.white,                    // 🔥 카드 색 통일
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -200,7 +308,7 @@ class LearningStatusTabBody extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '내 티어: $tierName',
+                          '내 티어: $userTier',
                           style: const TextStyle(
                             color: Color(0xFF2C2C2C),
                             fontSize: 16,
@@ -218,8 +326,7 @@ class LearningStatusTabBody extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // 오른쪽: 티어 PNG + (플래티넘이면 금색 테두리)
-                  _TierIcon(tierName: tierName),
+                  _TierIcon(tierName: userTier),
                 ],
               ),
             ),
@@ -227,9 +334,7 @@ class LearningStatusTabBody extends StatelessWidget {
             const SizedBox(height: 12),
 
             // ===== 프로그레스 바 (경험치 기반) =====
-            // 플래티넘이면 숨기기
             if (!isPlatinum) _ProgressBar(completionRatio: expRatio),
-
             if (!isPlatinum) const SizedBox(height: 6),
 
             // ===== 프로그레스 바 하단: 현재 티어 경험치 정보 =====
@@ -237,7 +342,6 @@ class LearningStatusTabBody extends StatelessWidget {
               Align(
                 alignment: Alignment.center,
                 child: () {
-                  // 플래티넘이면 "현재 EXP만" 표시
                   if (isPlatinum) {
                     return Text(
                       '${expProgress.currentLocalExp} EXP',
@@ -247,10 +351,8 @@ class LearningStatusTabBody extends StatelessWidget {
                       ),
                     );
                   }
-
-                  // 나머지 티어는 누적 통 기준 / 남은 EXP 표시
                   return Text(
-                        '${expProgress.currentLocalExp} / ${expProgress.tierMaxExp} EXP'
+                    '${expProgress.currentLocalExp} / ${expProgress.tierMaxExp} EXP'
                         ' · 다음 티어까지 ${expProgress.remainingExp} EXP',
                     style: const TextStyle(
                       fontSize: 12,
@@ -260,37 +362,79 @@ class LearningStatusTabBody extends StatelessWidget {
                 }(),
               ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
 
-            // ===== 전체 푼 퀴즈 개수 =====
+            // ===== 전체 정답률 카드 (흰색 카드) =====
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFFF4F3F6),
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,                    // 🔥 카드 색 통일
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Text(
-                '전체 푼 퀴즈 개수 : $totalQuizCount',
-                style: const TextStyle(
-                  color: Color(0xFF2C2C2C),
-                  fontSize: 16,
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w600,
-                  height: 1.25,
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '전체 정답률',
+                    style: TextStyle(
+                      color: Color(0xFF212121),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        '${accuracyPercent.toStringAsFixed(1)}%',
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF4E7C88),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          totalQuizCount > 0
+                              ? '지금까지 총 $totalQuizCount문제 중 '
+                              '$correctQuizCount문제를 맞혔어요.'
+                              : '아직 푼 퀴즈가 없어요. 오늘 첫 문제를 풀어볼까요?',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF6B6B6B),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
-            // ===== 주간 학습량 그래프 =====
+            // ===== 🔥 정답률 아래로 이동한 주간 학습량 그래프 (흰색 카드) =====
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFFF4F3F6),
+                color: Colors.white,                    // 카드 색 통일
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
               child: Column(
@@ -307,11 +451,141 @@ class LearningStatusTabBody extends StatelessWidget {
                   const SizedBox(height: 8),
                   SizedBox(
                     height: 220,
-                    child: WeeklyStudyChart(weeklyData: weeklyData),
+                    child: WeeklyStudyChart(
+                      weeklyData: widget.weeklyData,
+                      trendData: _accuracyTrend?.trend,   // 🔥 여기 추가
+                    ),
                   ),
                 ],
               ),
             ),
+
+
+            const SizedBox(height: 16),
+
+            // ===== 카테고리별 푼 문제 수 (흰색 카드) =====
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,                    // 🔥 카드 색 통일
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '카테고리별 학습량',
+                    style: TextStyle(
+                      color: Color(0xFF212121),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_categorySolved.isEmpty)
+                    const Text(
+                      '아직 카테고리별로 푼 문제가 없어요.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF6B6B6B),
+                      ),
+                    )
+                  else
+                    Column(
+                      children: _categorySolved.map((c) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  c.category,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFF333333),
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${c.solvedCount}문제',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF6B6B6B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // ===== 많이 맞힌 / 많이 틀린 카테고리 (흰색 카드) =====
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,                    // 🔥 카드 색 통일
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '카테고리별 성과',
+                    style: TextStyle(
+                      color: Color(0xFF212121),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 많이 맞힌
+                      Expanded(
+                        child: _CategoryListCard(
+                          title: '많이 맞힌 카테고리',
+                          items: mostCorrectCategories,
+                          emptyText: '아직 맞힌 기록이 없어요.',
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // 많이 틀린
+                      Expanded(
+                        child: _CategoryListCard(
+                          title: '많이 틀린 카테고리',
+                          items: mostWrongCategories,
+                          emptyText: '아직 틀린 기록이 없어요.',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -354,6 +628,76 @@ class _ProgressBar extends StatelessWidget {
   }
 }
 
+/// 🔥 카테고리 리스트(많이 맞힌/틀린) 공용 카드
+class _CategoryListCard extends StatelessWidget {
+  final String title;
+  final List<CategoryPerformanceItem> items;
+  final String emptyText;
+
+  const _CategoryListCard({
+    super.key,
+    required this.title,
+    required this.items,
+    required this.emptyText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final topItems = items.take(3).toList(); // 상위 3개만
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF333333),
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (topItems.isEmpty)
+          Text(
+            emptyText,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF9E9E9E),
+            ),
+          )
+        else
+          Column(
+            children: topItems.map((e) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        e.category,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF424242),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${e.count}회',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF757575),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+      ],
+    );
+  }
+}
+
 /// 🔥 티어 PNG 아이콘 전용 위젯
 /// 플래티넘이면 금색 테두리 적용
 class _TierIcon extends StatelessWidget {
@@ -381,11 +725,9 @@ class _TierIcon extends StatelessWidget {
     return 'assets/images/bronze.png';
   }
 
-
   @override
   Widget build(BuildContext context) {
-    // 로그인 유저 티어가 있으면 그걸 우선, 없으면 파라미터 tierName 사용
-    final String userTier = UserInfo.currentUser?.tier ?? tierName;
+    final String userTier = tierName;
     final String lower = userTier.toLowerCase();
     final bool isPlatinum =
         userTier.contains('플래티넘') || lower.contains('platinum');
