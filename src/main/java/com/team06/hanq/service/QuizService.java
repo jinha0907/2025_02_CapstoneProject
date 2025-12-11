@@ -14,6 +14,8 @@ import com.team06.hanq.dto.CategoryStatsDTO;
 import com.team06.hanq.dto.CategoryStatsDTO.CategoryCount;
 import com.team06.hanq.dto.CategoryPerformanceDTO;
 import com.team06.hanq.dto.CategoryPerformanceDTO.CategoryStat;
+import com.team06.hanq.dto.AccuracyTrendDTO;
+import com.team06.hanq.dto.AccuracyTrendDTO.DailyAccuracy;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -200,5 +202,31 @@ public class QuizService {
                 .build();
     }
 
+    public AccuracyTrendDTO getAccuracyTrend(Long userId, int days) {
+        List<Object[]> results = quizSessionRepo.findAccuracyTrend(userId, days);
+
+        List<DailyAccuracy> trendList = results.stream()
+                .map(r -> {
+                    String date = String.valueOf(r[0]);
+                    int total = ((Number) r[1]).intValue();
+                    int correct = ((Number) r[2]).intValue();
+                    double accuracy = (total == 0) ? 0.0 :
+                            Math.round(((double) correct / total) * 1000.0) / 1000.0;
+
+                    return DailyAccuracy.builder()
+                            .date(date)
+                            .total(total)
+                            .correct(correct)
+                            .accuracy(accuracy)
+                            .build();
+                })
+                .toList();
+
+        return AccuracyTrendDTO.builder()
+                .userId(userId)
+                .periodDays(days)
+                .trend(trendList)
+                .build();
+    }
 
 }

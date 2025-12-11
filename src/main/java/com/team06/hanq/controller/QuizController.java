@@ -6,6 +6,7 @@ import com.team06.hanq.dto.QuizResultResponseDTO;
 import com.team06.hanq.dto.UserAccuracyDTO;
 import com.team06.hanq.entity.QuizDetails;
 import com.team06.hanq.service.QuizService;
+import com.team06.hanq.dto.AccuracyTrendDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -64,6 +65,16 @@ public class QuizController {
     @ApiResponseDocs.DefaultErrorResponses
     public ResponseEntity<CategoryPerformanceDTO> getCategoryPerformance(@PathVariable Long userId) {
         return ResponseEntity.ok(quizService.getCategoryPerformance(userId));
+    }
+
+    @GetMapping("/stats/accuracy/trend/{userId}")
+    @Operation(summary = "유저 정답률 추이 조회", description = "최근 n일 간의 정답률 변화를 반환합니다. (기본 7일)")
+    @ApiResponse(responseCode = "200", description = "정답률 추이 조회 성공")
+    @ApiResponseDocs.DefaultErrorResponses
+    public ResponseEntity<AccuracyTrendDTO> getAccuracyTrend(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "7") int days) {
+        return ResponseEntity.ok(quizService.getAccuracyTrend(userId, days));
     }
 
 }
