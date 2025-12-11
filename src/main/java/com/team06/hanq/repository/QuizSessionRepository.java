@@ -20,4 +20,12 @@ public interface QuizSessionRepository extends JpaRepository<QuizSession, Long> 
     List<QuizSession> findByUserId(Long userId);
 
     int countByUserIdAndQuizId(Long userId, Long quizId);
+
+    // 전체 푼 문제 개수
+    @Query("SELECT COUNT(qs) FROM QuizSession qs WHERE qs.userId = :userId")
+    long countTotalAttempts(@Param("userId") Long userId);
+
+    // 맞힌 문제 개수
+    @Query("SELECT COUNT(qs) FROM QuizSession qs WHERE qs.userId = :userId AND qs.isCorrect = true")
+    long countCorrectAttempts(@Param("userId") Long userId);
 }

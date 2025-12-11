@@ -3,12 +3,14 @@ package com.team06.hanq.controller;
 import com.team06.hanq.config.ApiResponseDocs;
 import com.team06.hanq.dto.QuizResultRequestDTO;
 import com.team06.hanq.dto.QuizResultResponseDTO;
+import com.team06.hanq.dto.UserAccuracyDTO;
 import com.team06.hanq.entity.QuizDetails;
 import com.team06.hanq.service.QuizService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,4 +40,9 @@ public class QuizController {
         return quizService.saveQuizResult(request);
     }
 
+    @GetMapping("/stats/accuracy/{userId}")
+    @Operation(summary = "유저 정답률 조회", description = "해당 유저의 전체 퀴즈 정답률을 반환합니다.")
+    public ResponseEntity<UserAccuracyDTO> getUserAccuracy(@PathVariable Long userId) {
+        return ResponseEntity.ok(quizService.getUserAccuracy(userId));
+    }
 }

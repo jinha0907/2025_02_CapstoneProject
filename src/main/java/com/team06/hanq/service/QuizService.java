@@ -9,6 +9,7 @@ import com.team06.hanq.exception.ErrorCode;
 import com.team06.hanq.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.team06.hanq.dto.UserAccuracyDTO;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -127,4 +128,21 @@ public class QuizService {
                 .currentTier(newTier.getTierName().name())
                 .build();
     }
+
+    public UserAccuracyDTO getUserAccuracy(Long userId) {
+        long totalAttempts = quizSessionRepo.countTotalAttempts(userId);
+        long correctAttempts = quizSessionRepo.countCorrectAttempts(userId);
+
+        double accuracy = (totalAttempts == 0)
+                ? 0.0
+                : Math.round(((double) correctAttempts / totalAttempts) * 1000.0) / 1000.0;
+
+        return UserAccuracyDTO.builder()
+                .userId(userId)
+                .totalQuizzes((int) totalAttempts)
+                .correctQuizzes((int) correctAttempts)
+                .accuracy(accuracy)
+                .build();
+    }
+
 }
