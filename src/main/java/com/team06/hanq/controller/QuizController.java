@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.team06.hanq.dto.CategoryStatsDTO;
 
 import java.util.List;
 
@@ -45,4 +46,13 @@ public class QuizController {
     public ResponseEntity<UserAccuracyDTO> getUserAccuracy(@PathVariable Long userId) {
         return ResponseEntity.ok(quizService.getUserAccuracy(userId));
     }
+
+    @GetMapping("/stats/category/{userId}")
+    @Operation(summary = "유저 카테고리별 푼 문제 수 조회", description = "전체 카테고리 중 유저가 푼 문제 수를 반환합니다.")
+    @ApiResponse(responseCode = "200", description = "카테고리별 문제 수 조회 성공")
+    @ApiResponseDocs.DefaultErrorResponses
+    public ResponseEntity<CategoryStatsDTO> getSolvedByCategory(@PathVariable Long userId) {
+        return ResponseEntity.ok(quizService.getSolvedByCategory(userId));
+    }
+
 }

@@ -28,4 +28,14 @@ public interface QuizSessionRepository extends JpaRepository<QuizSession, Long> 
     // 맞힌 문제 개수
     @Query("SELECT COUNT(qs) FROM QuizSession qs WHERE qs.userId = :userId AND qs.isCorrect = true")
     long countCorrectAttempts(@Param("userId") Long userId);
+
+    @Query("""
+    SELECT h.category AS category, COUNT(qs.quizId) AS solvedCount
+    FROM QuizSession qs
+    JOIN QuizHeader h ON qs.quizId = h.quizId
+    WHERE qs.userId = :userId
+    GROUP BY h.category
+""")
+    List<Object[]> countSolvedByCategory(@Param("userId") Long userId);
+
 }

@@ -10,6 +10,8 @@ import com.team06.hanq.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.team06.hanq.dto.UserAccuracyDTO;
+import com.team06.hanq.dto.CategoryStatsDTO;
+import com.team06.hanq.dto.CategoryStatsDTO.CategoryCount;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -142,6 +144,37 @@ public class QuizService {
                 .totalQuizzes((int) totalAttempts)
                 .correctQuizzes((int) correctAttempts)
                 .accuracy(accuracy)
+                .build();
+    }
+
+    public CategoryStatsDTO getSolvedByCategory(Long userId) {
+        // 1️⃣ DB에서 유저가 푼 문제의 카테고리별 개수 조회
+        List<Object[]> results = quizSessionRepo.countSolvedByCategory(userId);
+
+        // 2️⃣ DB에 존재하는 전체 카테고리 가져오기
+        List<String> allCategories = quizDetailsRepo.findAll().stream()
+                .map(q -> q.getQuizHeader().getCategory())
+                .distinct()
+                .toList();
+
+        // 3️⃣ map으로 변환
+        Map<String, Long> solvedMap = results.stream()
+                .collect(Collectors.toMap(
+                        r -> (String) r[0],
+                        r -> (Long) r[1]
+                ));
+
+        // 4️⃣ 전체 카테고리를 기준으로, 푼 게 없으면 0
+        List<CategoryCount> categoryList = allCategories.stream()
+                .map(cat -> CategoryCount.builder()
+                        .category(cat)
+                        .solvedCount(solvedMap.getOrDefault(cat, 0L))
+                        .build())
+                .toList();
+
+        return CategoryStatsDTO.builder()
+                .userId(userId)
+                .categories(categoryList)
                 .build();
     }
 
