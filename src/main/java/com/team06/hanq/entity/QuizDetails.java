@@ -31,5 +31,8 @@ public class QuizDetails {
 
     @Column(columnDefinition = "JSON")
     private String explanation;
+
+    @Column(nullable = false)
+    private String hint;
 }
 

@@ -1,6 +1,7 @@
 package com.team06.hanq.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team06.hanq.entity.QuizDetails;
@@ -65,6 +66,7 @@ public class QuizDataLoader {
                         .choices(objectMapper.writeValueAsString(item.getChoices()))
                         .answer(item.getAnswer())
                         .explanation(item.getExplanation()) // String으로 단일 해설 저장
+                        .hint(item.getHint())
                         .build();
                 quizDetailsRepo.save(details);
 
@@ -106,6 +108,8 @@ public class QuizDataLoader {
         private String answer;
         private String explanation;
         private String hint;
+
+        @JsonProperty("difficulty_group")   // ✅ 필드 매핑
         private String difficultyGroup;     // ✅ Enum 매핑용
         private Double predictedDifficulty; // 🚫 무시됨
         private List<String> contexts;      // 🚫 무시됨
