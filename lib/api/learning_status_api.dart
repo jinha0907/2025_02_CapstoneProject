@@ -65,14 +65,23 @@ class LearningStatusApi {
   /// 🔹 정답률 추이(트렌드) 조회
   /// GET /quiz/stats/accuracy/trend/{userId}
   /// ----------------------------------------------
-  Future<UserAccuracyTrend> fetchUserAccuracyTrend(int userId) async {
+  Future<UserAccuracyTrend> fetchUserAccuracyTrend(
+      int userId, {
+        int days = 6, // 기본 요청 days = 6
+      }) async {
     try {
-      final res = await _dio.get('/quiz/stats/accuracy/trend/$userId');
+      final res = await _dio.get(
+        '/quiz/stats/accuracy/trend/$userId',
+        queryParameters: {
+          'days': days, // 🔥 서버 요구사항 (integer) 그대로 전달
+        },
+      );
       return UserAccuracyTrend.fromJson(res.data);
     } catch (e) {
       throw Exception('정답률 트렌드 조회 실패: $e');
     }
   }
+
 
   /// ----------------------------------------------
   /// 🔥 학습현황 탭 전체 데이터 한 번에 가져오기 (병렬 호출)
