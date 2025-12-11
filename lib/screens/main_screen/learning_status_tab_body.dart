@@ -269,7 +269,7 @@ class _LearningStatusTabBodyState extends State<LearningStatusTabBody> {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          '내 학습량과 정답률, 카테고리별 성과를 한눈에 확인해보세요.',
+                          '내 학습량과 정답률, 카테고리별 성과를\n한눈에 확인해보세요.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13,
@@ -406,7 +406,7 @@ class _LearningStatusTabBodyState extends State<LearningStatusTabBody> {
                         child: Text(
                           totalQuizCount > 0
                               ? '지금까지 총 $totalQuizCount문제 중 '
-                              '$correctQuizCount문제를 맞혔어요.'
+                              '$correctQuizCount문제를\n맞혔어요.'
                               : '아직 푼 퀴즈가 없어요. 오늘 첫 문제를 풀어볼까요?',
                           style: const TextStyle(
                             fontSize: 13,

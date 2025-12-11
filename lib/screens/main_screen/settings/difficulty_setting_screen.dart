@@ -106,21 +106,21 @@ class _DifficultySettingScreenState extends State<DifficultySettingScreen> {
                 child: Column(
                   children: [
                     _DifficultyOption(
-                      title: 'EASY: 한국 사회 초입이라면 이 단계부터 가볍게 시작해요!',
+                      title: 'EASY: 한국 사회 초입이라면 이 단계부터\n            가볍게 시작해요!',
                       value: 'easy',
                       groupValue: _selectedDifficulty,
                       onChanged: (v) => setState(() => _selectedDifficulty = v),
                     ),
                     const SizedBox(height: 20),
                     _DifficultyOption(
-                      title: 'NORMAL: 어느 정도 익숙하면 이 난이도가 잘 맞아요!',
+                      title: 'NORMAL: 어느 정도 익숙하면 이 난이도가\n                   잘 맞아요!',
                       value: 'normal',
                       groupValue: _selectedDifficulty,
                       onChanged: (v) => setState(() => _selectedDifficulty = v),
                     ),
                     const SizedBox(height: 20),
                     _DifficultyOption(
-                      title: 'HARD: 한국 사회를 꽤 잘 알아야 풀 수 있어요!',
+                      title: 'HARD: 한국 사회를 꽤 잘 알아야\n             풀 수 있어요!',
                       value: 'hard',
                       groupValue: _selectedDifficulty,
                       onChanged: (v) => setState(() => _selectedDifficulty = v),

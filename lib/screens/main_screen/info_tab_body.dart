@@ -443,7 +443,7 @@ class _InfoTabBodyState extends State<InfoTabBody> {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        '퀴즈 정보 모음',
+                        '사회 정보 모음',
                         style: TextStyle(
                           color: Color(0xFF2C2C2C),
                           fontSize: 16,

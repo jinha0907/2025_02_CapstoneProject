@@ -12,7 +12,7 @@ extension InfoKindExt on InfoKind {
   String get basePath => this == InfoKind.culture ? '/culture' : '/life';
 
   /// 화면 상단에 표시할 이름
-  String get label => this == InfoKind.culture ? '퀴즈 정보 모음' : '생활 정보 모음';
+  String get label => this == InfoKind.culture ? '사회 정보 모음' : '생활 정보 모음';
 }
 
 class InfoApi {
