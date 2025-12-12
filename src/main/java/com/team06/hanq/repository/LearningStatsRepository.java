@@ -15,4 +15,16 @@ public interface LearningStatsRepository extends JpaRepository<LearningStats, Lo
 
     @Query("SELECT l FROM LearningStats l WHERE l.userId = :userId AND l.date >= :startDate ORDER BY l.date ASC")
     List<LearningStats> findStatsForLast7Days(@Param("userId") Long userId, @Param("startDate") LocalDate startDate);
+
+    @Query(value = """
+    SELECT ls.date AS day,
+           ls.total_quizzes AS total,
+           ls.correct_quizzes AS correct
+    FROM learning_stats ls
+    WHERE ls.user_id = :userId
+      AND ls.date >= DATE_SUB(CURRENT_DATE, INTERVAL :days DAY)
+    ORDER BY ls.date ASC
+""", nativeQuery = true)
+    List<Object[]> findAccuracyTrendFromStats(@Param("userId") Long userId, @Param("days") int days);
+
 }

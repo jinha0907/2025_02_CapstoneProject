@@ -68,7 +68,7 @@ public class QuizController {
     }
 
     @GetMapping("/stats/accuracy/trend/{userId}")
-    @Operation(summary = "유저 정답률 추이 조회", description = "최근 n일 간의 정답률 변화를 반환합니다. (기본 7일)")
+    @Operation(summary = "유저 정답률 추이 조회", description = "최근 N일 간의 정답률 변화를 반환합니다. (기본 7일)")
     @ApiResponse(responseCode = "200", description = "정답률 추이 조회 성공")
     @ApiResponseDocs.DefaultErrorResponses
     public ResponseEntity<AccuracyTrendDTO> getAccuracyTrend(
@@ -76,5 +76,6 @@ public class QuizController {
             @RequestParam(defaultValue = "7") int days) {
         return ResponseEntity.ok(quizService.getAccuracyTrend(userId, days));
     }
+
 
 }

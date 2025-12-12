@@ -58,17 +58,4 @@ public interface QuizSessionRepository extends JpaRepository<QuizSession, Long> 
 """)
     List<Object[]> countWrongByCategory(@Param("userId") Long userId);
 
-    @Query(value = """
-    SELECT 
-        DATE(qs.finished_at) AS day,
-        COUNT(qs.session_id) AS total,
-        SUM(CASE WHEN qs.is_correct = true THEN 1 ELSE 0 END) AS correct
-    FROM quiz_session qs
-    WHERE qs.user_id = :userId
-      AND qs.finished_at >= DATE_SUB(CURRENT_DATE, INTERVAL :days DAY)
-    GROUP BY DATE(qs.finished_at)
-    ORDER BY day ASC
-""", nativeQuery = true)
-    List<Object[]> findAccuracyTrend(@Param("userId") Long userId, @Param("days") int days);
-
 }

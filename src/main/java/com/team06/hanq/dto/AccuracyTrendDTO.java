@@ -9,7 +9,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class AccuracyTrendDTO {
-
     private Long userId;
     private int periodDays;
     private List<DailyAccuracy> trend;
