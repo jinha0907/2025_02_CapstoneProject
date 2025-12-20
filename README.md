@@ -58,6 +58,7 @@ Controller → Service → Repository → Entity → DTO (Request / Response)
 
 ### 1️⃣ 환경 설정  
 # src/main/resources/application.yml
+```
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/hanq?serverTimezone=Asia/Seoul
@@ -67,12 +68,13 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+```
 
 ### 2️⃣ 빌드 및 실행
-# Build
+- Build
 ./gradlew clean build
 
-# Run
+- Run
 java -jar build/libs/hanq-0.0.1-SNAPSHOT.jar
 
 ---
