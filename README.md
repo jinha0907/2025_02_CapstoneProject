@@ -4,10 +4,11 @@
 >
 > 본 프로젝트는 중앙대학교 소프트웨어학부 2025_02 캡스톤 프로젝트 수업 산출물입니다.
 
+
 ## System Architecture
 
 - **RAG Module**
-  - 사회통합프로그램(KIIP) 교재와 고용허가제(EPS-TOPIK) 교재를 검색하여 팩트 기반의 퀴즈, 해설, 힌트를 생성합니다.
+  - 사회통합프로그램(KIIP) 교재와 고용허가제(EPS-TOPIK) 교재를 Knowledge Database로 하여 퀴즈에 대한 해설, 힌트를 생성합니다.
 
 - **Difficulty Module**
   -  유학생 User Study 데이터를 기반으로 체감 난이도를 생성하고 Few-shot으로 학습하여, 새로운 퀴즈의 난이도를 1.0~5.0 척도로 예측합니다.
