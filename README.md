@@ -43,10 +43,11 @@ lib/
 ## 🚀 실행 방법
 
 ### 0️⃣ 저장소 클론
+```
 git clone https://github.com/jinha0907/2025_02_CapstoneProject.git
 
 cd 2025_02_CapstoneProject
-
+```
 
 ### 1️⃣ 환경 설정
 - **Flutter SDK** 설치 
@@ -55,33 +56,33 @@ cd 2025_02_CapstoneProject
 
 ### 2️⃣ 패키지 설치
 프로젝트 루트 경로에서 의존성 패키지를 설치합니다.
-
+```
 flutter clean
 
 flutter pub get
-
+```
 ### 3️⃣ 빌드 및 실행
 앱을 디버그 모드로 실행합니다. (에뮬레이터나 기기가 연결되어 있어야 합니다.)
-
-bash flutter run
-
+```
+flutter run
+```
 성능 테스트가 필요하거나 배포 환경과 동일하게 실행하려면 릴리즈 모드로 실행하세요.
-
-bash flutter run --release
-
+```
+flutter run --release
+```
 ---
 
 ### 💡 추가 팁 (선택 사항)
 만약 특정 플랫폼(Android/iOS)을 지정해서 실행하고 싶다면 다음 명령어를 사용할 수 있습니다.
 
 연결된 기기 목록 확인
-
+```
 flutter devices
-
+```
 특정 기기에서  실행 ( ex : test1)
-
+```
 flutter run -d test1
-
+```
 ## 기술 스택
 - **Framework**: Flutter
 - **Language**: Dart
