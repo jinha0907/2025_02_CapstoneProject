@@ -36,7 +36,7 @@ HanQ는 국내 체류외국인이 한국 사회에 안정적으로 적응하고 
 ## System Overview
 
 HanQ는 다음과 같은 흐름으로 동작합니다.
-![System Architecture](./System Architecture.png)
+![System Architecture](System%20Architecture.png)
 1. **AI Layer (Offline Processing)**
    - 공인/교재 기반 지식 DB 구성(EPS-TOPIK, KIIP 등)
    - VectorDB 구축 및 RAG 파이프라인으로 퀴즈 해설/힌트 생성
