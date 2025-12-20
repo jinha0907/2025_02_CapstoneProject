@@ -11,8 +11,6 @@ RAG Module: 사회통합프로그램(KIIP) 교재와 고용허가제(EPS-TOPIK) 
 Difficulty Module: 유학생 User Study 데이터를 기반으로 체감 난이도를 생성하고 Few-shot으로 학습하여, 새로운 퀴즈의 난이도를 1.0~5.0 척도로 예측합니다.
 
 ## Getting Started
-이 프로젝트는 main.py CLI 도구를 통해 전체 파이프라인(DB 구축, 생성, 평가)을 실행할 수 있습니다.
-
 
 **1. 벡터 DB 구축 (Build Vector DB)**
 
@@ -27,7 +25,7 @@ python main.py build_db --type Markdown --chunk_size 500 --chunk_overlap 50
 
 **2. 퀴즈 및 해설 생성 (Run RAG)**
 
-구축된 DB를 바탕으로 퀴즈, 정답, 상세 해설 및 유도 힌트를 생성합니다.
+구축된 DB를 바탕으로 각 퀴즈에 대한 해설 및 힌트를 생성합니다.
 
 ```
 # RAG 파이프라인 실행
@@ -46,13 +44,34 @@ python main.py eval
 
 ```
 python 3.12.3
-langchain
-openai
-faiss-cpu
-ragas
+
+# Core & Data Utilities
 pandas
 numpy
+python-dotenv
+
+# LLM & OpenAI
+openai
+
+# LangChain Ecosystem
+langchain
+langchain-core
+langchain-community
+langchain-openai
+langchain-text-splitters
+
+# Vector Database
+faiss-cpu
+
+# Document Loaders (for PDF)
+pypdf
+
+# Evaluation (RAGAs)
+ragas
+datasets
+
+# Visualization
 matplotlib
 seaborn
-python-dotenv
+mplcursors
 ```
