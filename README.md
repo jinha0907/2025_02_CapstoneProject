@@ -13,6 +13,9 @@ Difficulty Module: 유학생 User Study 데이터를 기반으로 체감 난이�
 ## Getting Started
 이 프로젝트는 main.py CLI 도구를 통해 전체 파이프라인(DB 구축, 생성, 평가)을 실행할 수 있습니다.
 
+
+**1. 벡터 DB 구축 (Build Vector DB)**
+지식 베이스(Markdown/PDF)를 임베딩하여 FAISS DB를 생성합니다.
 ```
 # 기본 설정으로 빌드 (Markdown 소스 사용)
 python main.py build_db --type Markdown
@@ -21,7 +24,7 @@ python main.py build_db --type Markdown
 python main.py build_db --type Markdown --chunk_size 500 --chunk_overlap 50
 ```
 
-퀴즈 및 해설 생성 (Run RAG)
+**2. 퀴즈 및 해설 생성 (Run RAG)**
 구축된 DB를 바탕으로 퀴즈, 정답, 상세 해설 및 유도 힌트를 생성합니다.
 
 ```
@@ -29,7 +32,7 @@ python main.py build_db --type Markdown --chunk_size 500 --chunk_overlap 50
 python main.py rag --type Markdown
 ```
 
-성능 평가 (Evaluation)
+**3. 성능 평가 (Evaluation)**
 생성된 결과물을 RAGAs 프레임워크를 통해 정량적으로 평가합니다.
 
 ```
